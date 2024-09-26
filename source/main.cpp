@@ -1,9 +1,9 @@
 #include "../include/utilities.hpp"
 
 //TODO:
-//	1) DUMP number in one table
-//	2) StackPop
-//	3) StackVerify
+//	1) StackVerify
+//	2) Html file with memory
+//	3) DUMP: function that return dump information
 
 int main() {
 
@@ -19,13 +19,12 @@ int main() {
 	STACK_ERROR_CHECK(status, &stk);
 #endif
 
-	STACK_PUSH(&stk, 10);
+	for (Stack_elem_t i = 0; i < 1000; i++)
+		STACK_PUSH(&stk, i);
 
-	DUMP(&stk);
-
-	STACK_PUSH(&stk, 20);
-
-	DUMP(&stk);
+	Stack_elem_t x = 0;
+	STACK_POP(&stk, &x);
+	STACK_POP(&stk, &x);
 
 #ifdef HTML_DUMP
 	status = HtmlLogFinisher(&stk);

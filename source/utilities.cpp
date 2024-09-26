@@ -21,13 +21,14 @@ StackStatusCode HtmlLogStarter(Stack_t* stk) {
 	fprintf(log_file, "\t\t.anchor:focused { \n\t\t\tborder-bottom: 1px solid; \n\t\t\tbackground: #bae498; \n\t\t}\n");
 
 	fprintf(log_file, "\t\t.table_header > td > h3{ \n\t\t\tpadding: 10px 20px; \n\t\t}\n");
-	fprintf(log_file, "\t\t.stack_pointer { \n\t\t\tcolor: red; \n\t\t}\n");
-	fprintf(log_file, "\t\t.stack_data_pointer { \n\t\t\tcolor: brown; \n\t\t}\n");
+	fprintf(log_file, "\t\t.stack_dump_number { \n\t\t\tcolor: turquoise; \n\t\t\ttext-align: center; \n\t\t}\n");
+	fprintf(log_file, "\t\t.stack_pointer { \n\t\t\tcolor: red; \n\t\t\ttext-align: center; \n\t\t}\n");
+	fprintf(log_file, "\t\t.stack_data_pointer { \n\t\t\tcolor: brown; \n\t\t\ttext-align: center; \n\t\t}\n");
 	fprintf(log_file, "\t\t.stack_data { \n\t\t\tcolor: green; \n\t\t\ttext-align: left; \n\t\t}\n");
-	fprintf(log_file, "\t\t.stack_capacity { \n\t\t\tcolor: blue; \n\t\t}\n");
-	fprintf(log_file, "\t\t.stack_size { \n\t\t\tcolor: violet; \n\t\t}\n");
+	fprintf(log_file, "\t\t.stack_capacity { \n\t\t\tcolor: blue; \n\t\t\ttext-align: center; \n\t\t}\n");
+	fprintf(log_file, "\t\t.stack_size { \n\t\t\tcolor: violet; \n\t\t\ttext-align: center; \n\t\t}\n");
 
-	fprintf(log_file, "\t\t.tb_stk { \n\t\t\twidth: 80%%; \n\t\t\tborder: 15px solid #F2F8F8; \
+	fprintf(log_file, "\t\t.tb_stk { \n\t\t\twidth: 90%%; \n\t\t\tborder: 15px solid #F2F8F8; \
 			\n\t\t\tborder-collapse: collapse; \n\t\t\tmargin: auto; \
 			\n\t\t\ttable-layout: auto; \n\t\t\tmargin-bottom: 20px; \
 			\n\t\t\tborder-top: 5px solid #F2F8F8; \n\t\t}\n");
@@ -35,7 +36,7 @@ StackStatusCode HtmlLogStarter(Stack_t* stk) {
 			\n\t\t\tbackground: #F2F8F8; \n\t\t\tborder: none; \
 			\n\t\t\tborder-bottom: 5px solid #F2F8F8; \n\t\t}\n");
 	fprintf(log_file, "\t\t.tb_stk td { \n\t\t\tpadding: 10px; \n\t\t\tborder: none; \
-			\n\t\t\ttext-align: center; \n\t\t\tborder-bottom: 5px solid #F2F8F8; \n\t\t}\n");
+			\n\t\t\tborder-bottom: 5px solid #F2F8F8; \n\t\t}\n");
 	fprintf(log_file, "\t\t.table_header > td { \n\t\t\ttext-align: center; \n\t\t}\n");
 	fprintf(log_file, "\t\t.tb_stk tbody tr:nth-child(odd) { \n\t\t\tbackground: #fff; \n\t\t}\n");
 	fprintf(log_file, "\t\t.tb_stk tbody tr:nth-child(even) { \n\t\t\tbackground: #F7F7F7; \n\t\t}\n");
@@ -55,7 +56,17 @@ StackStatusCode HtmlLogStarter(Stack_t* stk) {
 
 	fprintf(log_file, "\t<body>\n");
 	fprintf(log_file, "\t\t<h1 align='center' name='top'><tt>MEGA DUMP</tt></h1>\n");
-	fprintf(log_file, "\t\t<p><a href='#time' class='anchor'><button class='btn'><tt>Working time of program</tt></button></a></p><br>\n");
+	fprintf(log_file, "\t\t<p><a href='#down' class='anchor'><button class='btn'><tt>Down</tt></button></a></p><br>\n");
+
+	fprintf(log_file, "\t\t<table class='tb_stk'>\n");
+	fprintf(log_file, "\t\t\t<tr class='table_header'>\n");
+	fprintf(log_file, "\t\t\t\t<td><tt><h3>Output number</tt></h3></td>\n");
+	fprintf(log_file, "\t\t\t\t<td><tt><h3>Stack pointer</tt></h3></td>\n");
+	fprintf(log_file, "\t\t\t\t<td><tt><h3>Stack data pointer</tt></h3></td>\n");
+	fprintf(log_file, "\t\t\t\t<td><tt><h3>Data</tt></h3></td>\n");
+	fprintf(log_file, "\t\t\t\t<td><tt><h3>Stack capacity</h3></tt></td>\n");
+	fprintf(log_file, "\t\t\t\t<td><tt><h3>Stack size</h3></tt></td>\n");
+	fprintf(log_file, "\t\t\t</tr>\n");
 
 	fclose(log_file);
 
@@ -70,26 +81,19 @@ StackStatusCode StackDump(Stack_t* stk) {
 	if (!log_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
-	fprintf(log_file, "\t\t<h2 align = 'center'>DUMP #%zu</h2>\n", number++);
-	fprintf(log_file, "\t\t<table class='tb_stk'>\n");
-
-	fprintf(log_file, "\t\t\t<tr class='table_header'>\n");
-	fprintf(log_file, "\t\t\t\t<td><tt><h3>Stack pointer</tt></h3></td>\n");
-	fprintf(log_file, "\t\t\t\t<td><tt><h3>Stack data pointer</tt></h3></td>\n");
-	fprintf(log_file, "\t\t\t\t<td><tt><h3>Data</tt></h3></td>\n");
-	fprintf(log_file, "\t\t\t\t<td><tt><h3>Stack capacity</h3></tt></td>\n");
-	fprintf(log_file, "\t\t\t\t<td><tt><h3>Stack size</h3></tt></td>\n");
-	fprintf(log_file, "\t\t\t</tr>\n");
-
 	fprintf(log_file, "\t\t\t<tr>\n");
+	fprintf(log_file, "\t\t\t\t<td class = 'stack_dump_number'><tt>%zu</tt></td>\n", number++);
 	fprintf(log_file, "\t\t\t\t<td class = 'stack_pointer'><tt>%p</tt></td>\n", stk);
 	fprintf(log_file, "\t\t\t\t<td class = 'stack_data_pointer'><tt>%p</tt></td>\n", stk->data);
-	fprintf(log_file, "\t\t\t\t<td class = 'stack_data'><tt>%d</tt></td>\n", *(stk->data + stk->size - 1));
+
+	fprintf(log_file, "\t\t\t\t<td class = 'stack_data'><tt>");
+	for (size_t i = 0; i < stk->size; i++)
+		fprintf(log_file, "%d ", *(stk->data + i));
+	fprintf(log_file, "</tt></td>\n");
+
 	fprintf(log_file, "\t\t\t\t<td class = 'stack_capacity'><tt>%zu</tt></td>\n", stk->capacity);
 	fprintf(log_file, "\t\t\t\t<td class = 'stack_size'><tt>%zu</tt></td>\n", stk->size);
 	fprintf(log_file, "\t\t\t</tr>\n");
-
-	fprintf(log_file, "\t\t</table>\n");
 
 	fclose(log_file);
 
@@ -102,13 +106,61 @@ StackStatusCode HtmlLogFinisher(Stack_t* stk) {
 	if (!log_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
-	fprintf(log_file, "\t\t<p><a href='#top' class='anchor'><button class='btn'><tt>TOP</tt></button></a></p>\n");
+	fprintf(log_file, "\t\t</table>\n");
+	fprintf(log_file, "\t\t<p><a href='#top' name='down' class='anchor'><button class='btn'><tt>TOP</tt></button></a></p>\n");
 	fprintf(log_file, "\t</body>\n");
 	fprintf(log_file, "</html>\n");
 
 	fclose(log_file);
 
-	system("open log_eblan.html");
+	OpenLogFile(stk);
+
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode OpenLogFile(Stack_t* stk) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	char* open_log_file = NULL;
+	status = StrConcatenation("open ", LOG_FILE_PATH, &open_log_file, stk);
+	STACK_ERROR_CHECK(status, stk);
+
+	system(open_log_file);
+	if (open_log_file)
+		free(open_log_file);
+
+	return STACK_NO_ERROR;
+}
+
+size_t StrLen(const char* str) {
+
+	size_t length = 0;
+
+	for (size_t i = 0; *(str + i) != '\0'; i++)
+		length++;
+
+	return length;
+}
+
+StackStatusCode StrConcatenation(const char* string1, const char* string2, char** str_out, Stack_t* stk) {
+
+	size_t size = StrLen(string1) + StrLen(string2);
+
+	*str_out = (char*)calloc(size + 1, sizeof(char));
+	if (!str_out)
+		STACK_ERROR_CHECK(STACK_ALLOC_ERROR, stk);
+
+	size_t i = 0;
+	for (;*(string1 + i) != '\0'; i++)
+		*(*str_out + i) = *(string1 + i);
+
+	for (size_t j = 0; *(string2 + j) != '\0'; j++) {
+		*(*str_out + i) = *(string2 + j);
+		i++;
+	}
+
+	*(*str_out + i) = '\0';
 
 	return STACK_NO_ERROR;
 }

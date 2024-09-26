@@ -25,14 +25,28 @@
 #define STACK_PUSH(stk, value) {		 \
 	status = StackPush(stk, value);		\
 	STACK_ERROR_CHECK(status, stk);		\
+	DUMP(stk);							\
 }
 
-const char LOG_FILE_PATH[] = "log_eblan.html";
+#define STACK_POP(stk, var_pointer) {												\
+	status = StackPop(stk, var_pointer); 											\
+	STACK_ERROR_CHECK(status, stk);													\
+	printf("\033[33;6mStack element:\033[0m \033[34;6m%d\033[0m\n", *var_pointer);	\
+	DUMP(stk);																		\
+}
+
+const char LOG_FILE_PATH[] = "html/log_eblan_main.html";
 const size_t DEFAULT_CAPACITY = 16;
+const size_t TRASH = 0xBEDADEDBEDA;
 
 StackStatusCode HtmlLogStarter(Stack_t* stk);
 StackStatusCode HtmlLogFinisher(Stack_t* stk);
 StackStatusCode StackDump(Stack_t* stk);
+StackStatusCode OpenLogFile(Stack_t* stk);
+
 const char* ErrorsMessenger(StackStatusCode status);
+
+size_t StrLen(const char* str);
+StackStatusCode StrConcatenation(const char* string1, const char* string2, char** str_out, Stack_t* stk);
 
 #endif //UTILITIES_INCLUDE

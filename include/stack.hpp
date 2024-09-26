@@ -21,5 +21,6 @@ struct Stack_t {
 StackStatusCode StackCtor(Stack_t* stk);
 StackStatusCode StackDtor(Stack_t* stk);
 StackStatusCode StackPush(Stack_t* stk, Stack_elem_t value);
+StackStatusCode StackPop(Stack_t* stk, Stack_elem_t* value);
 
 #endif //STACK_INCLUDE
