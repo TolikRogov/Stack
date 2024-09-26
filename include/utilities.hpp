@@ -28,14 +28,13 @@
 	DUMP(stk);							\
 }
 
-#define STACK_POP(stk, var_pointer) {												\
-	status = StackPop(stk, var_pointer); 											\
-	STACK_ERROR_CHECK(status, stk);													\
-	printf("\033[33;6mStack element:\033[0m \033[34;6m%d\033[0m\n", *var_pointer);	\
-	DUMP(stk);																		\
+#define STACK_POP(stk, var_pointer) {													\
+	status = StackPop(stk, var_pointer); 												\
+	STACK_ERROR_CHECK(status, stk);														\
+	/*printf("\033[33;6mStack element:\033[0m \033[34;6m%d\033[0m\n", *var_pointer);*/	\
+	DUMP(stk);																			\
 }
 
-const char LOG_FILE_PATH[] = "html/log_eblan_main.html";
 const size_t DEFAULT_CAPACITY = 16;
 const size_t TRASH = 0xBEDADEDBEDA;
 

@@ -1,8 +1,12 @@
 #include "../include/utilities.hpp"
 
+struct Html_File_Paths {
+	const char* main = "html/log_eblan_main.html";
+} Log_paths;
+
 StackStatusCode HtmlLogStarter(Stack_t* stk) {
 
-	FILE* log_file = fopen(LOG_FILE_PATH, "w");
+	FILE* log_file = fopen(Log_paths.main, "w");
 	if (!log_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
@@ -77,7 +81,7 @@ StackStatusCode StackDump(Stack_t* stk) {
 
 	static size_t number = 1;
 
-	FILE* log_file = fopen(LOG_FILE_PATH, "a");
+	FILE* log_file = fopen(Log_paths.main, "a");
 	if (!log_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
@@ -102,7 +106,7 @@ StackStatusCode StackDump(Stack_t* stk) {
 
 StackStatusCode HtmlLogFinisher(Stack_t* stk) {
 
-	FILE* log_file = fopen(LOG_FILE_PATH, "a");
+	FILE* log_file = fopen(Log_paths.main, "a");
 	if (!log_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
@@ -123,7 +127,7 @@ StackStatusCode OpenLogFile(Stack_t* stk) {
 	StackStatusCode status = STACK_NO_ERROR;
 
 	char* open_log_file = NULL;
-	status = StrConcatenation("open ", LOG_FILE_PATH, &open_log_file, stk);
+	status = StrConcatenation("open ", Log_paths.main, &open_log_file, stk);
 	STACK_ERROR_CHECK(status, stk);
 
 	system(open_log_file);
@@ -167,9 +171,11 @@ StackStatusCode StrConcatenation(const char* string1, const char* string2, char*
 
 const char* ErrorsMessenger(StackStatusCode status) {
 	switch (status) {
-		case STACK_NO_ERROR: 		return "STACK NO ERROR";
-		case STACK_ALLOC_ERROR: 	return "STACK MEMORY ALLOCATION ERROR";
-		case STACK_FILE_OPEN_ERROR:	return "STACK FILE OPEN ERROR";
-		default:			 		return "UNDEFINED ERROR";
+		case STACK_NO_ERROR: 			return "STACK NO ERROR";
+		case STACK_ALLOC_ERROR: 		return "STACK MEMORY ALLOCATION ERROR";
+		case STACK_FILE_OPEN_ERROR:		return "STACK FILE OPEN ERROR";
+		case STACK_DIMENSIONS_ERROR:	return "STACK DIMENSIONS ERROR";
+		case STACK_POINTER_ERROR:		return "STACK POINTER IS NULL";
+		default:			 			return "UNDEFINED ERROR";
 	}
 }

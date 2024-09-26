@@ -1,9 +1,9 @@
 #include "../include/utilities.hpp"
 
 //TODO:
-//	1) StackVerify
-//	2) Html file with memory
-//	3) DUMP: function that return dump information
+//	I) Html file with different dumps: 1) memory (calloc, realloc), 2) stack ctor, 3) stack push, 4) stack pop,
+//									  5) stack dtor, 6) stack verify, 7) Stack status code
+//	II) -I key (я пытался)
 
 int main() {
 
@@ -23,7 +23,6 @@ int main() {
 		STACK_PUSH(&stk, i);
 
 	Stack_elem_t x = 0;
-	STACK_POP(&stk, &x);
 	STACK_POP(&stk, &x);
 
 #ifdef HTML_DUMP
