@@ -19,7 +19,7 @@ StackStatusCode StackPush(Stack_t* stk, Stack_elem_t value) {
 			STACK_ERROR_CHECK(STACK_ALLOC_ERROR, stk);
 	}
 
-	*(stk->data + stk->size) = value;
+	*(stk->data + stk->size++) = value;
 
 	return STACK_NO_ERROR;
 }

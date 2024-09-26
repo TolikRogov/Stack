@@ -1,5 +1,10 @@
 #include "../include/utilities.hpp"
 
+//TODO:
+//	1) DUMP number in one table
+//	2) StackPop
+//	3) StackVerify
+
 int main() {
 
 	StackStatusCode status = STACK_NO_ERROR;
@@ -14,8 +19,11 @@ int main() {
 	STACK_ERROR_CHECK(status, &stk);
 #endif
 
-	status = StackPush(&stk, 10);
-	STACK_ERROR_CHECK(status, &stk);
+	STACK_PUSH(&stk, 10);
+
+	DUMP(&stk);
+
+	STACK_PUSH(&stk, 20);
 
 	DUMP(&stk);
 

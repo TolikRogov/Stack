@@ -18,7 +18,14 @@
 	status = StackDump(stk);	    \
 	STACK_ERROR_CHECK(status, stk);	\
 }
+#else
+#define DUMP(stk)
 #endif
+
+#define STACK_PUSH(stk, value) {		 \
+	status = StackPush(stk, value);		\
+	STACK_ERROR_CHECK(status, stk);		\
+}
 
 const char LOG_FILE_PATH[] = "log_eblan.html";
 const size_t DEFAULT_CAPACITY = 16;
