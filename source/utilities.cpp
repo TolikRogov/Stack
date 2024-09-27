@@ -1,12 +1,48 @@
 #include "../include/utilities.hpp"
 
-struct Html_File_Paths {
-	const char* main = "html/log_eblan_main.html";
-} Log_paths;
+struct HtmlNames {
+	const char* folder = "html_log_eblan/";
+	HtmlFile files[1] = { {.file_name = "main.html"} };
+} Log_Names;
+
+StackStatusCode MakeHtmlFolder(Stack_t* stk) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	char* make_folder = NULL;
+	status = StrConcatenation("mkdir ", Log_Names.folder, &make_folder, stk);
+	STACK_ERROR_CHECK(status, stk);
+
+	system(make_folder);
+	if (make_folder)
+		free(make_folder);
+
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode MakeHtmlFilePath(Stack_t* stk) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	size_t size = sizeof(Log_Names.files) / sizeof(Log_Names.files[0]);
+
+	for (size_t i = 0; i < size; i++) {
+		status = StrConcatenation(Log_Names.folder, Log_Names.files[i].file_name, &Log_Names.files[i].file_path, stk);
+		STACK_ERROR_CHECK(status, stk);
+	}
+
+	return STACK_NO_ERROR;
+}
 
 StackStatusCode HtmlLogStarter(Stack_t* stk) {
 
-	FILE* log_file = fopen(Log_paths.main, "w");
+	DIR* html_dir = opendir(Log_Names.folder);
+	if (!html_dir)
+		MakeHtmlFolder(stk);
+
+	MakeHtmlFilePath(stk);
+
+	FILE* log_file = fopen(Log_Names.files[MAIN].file_path, "w");
 	if (!log_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
@@ -72,7 +108,8 @@ StackStatusCode HtmlLogStarter(Stack_t* stk) {
 	fprintf(log_file, "\t\t\t\t<td><tt><h3>Stack size</h3></tt></td>\n");
 	fprintf(log_file, "\t\t\t</tr>\n");
 
-	fclose(log_file);
+	if (fclose(log_file))
+		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
 
 	return STACK_NO_ERROR;
 }
@@ -81,7 +118,7 @@ StackStatusCode StackDump(Stack_t* stk) {
 
 	static size_t number = 1;
 
-	FILE* log_file = fopen(Log_paths.main, "a");
+	FILE* log_file = fopen(Log_Names.files[MAIN].file_path, "a");
 	if (!log_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
@@ -99,14 +136,15 @@ StackStatusCode StackDump(Stack_t* stk) {
 	fprintf(log_file, "\t\t\t\t<td class = 'stack_size'><tt>%zu</tt></td>\n", stk->size);
 	fprintf(log_file, "\t\t\t</tr>\n");
 
-	fclose(log_file);
+	if (fclose(log_file))
+		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
 
 	return STACK_NO_ERROR;
 }
 
 StackStatusCode HtmlLogFinisher(Stack_t* stk) {
 
-	FILE* log_file = fopen(Log_paths.main, "a");
+	FILE* log_file = fopen(Log_Names.files[MAIN].file_path, "a");
 	if (!log_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
@@ -115,19 +153,20 @@ StackStatusCode HtmlLogFinisher(Stack_t* stk) {
 	fprintf(log_file, "\t</body>\n");
 	fprintf(log_file, "</html>\n");
 
-	fclose(log_file);
+	if (fclose(log_file))
+		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
 
-	OpenLogFile(stk);
+	RunMainHtmlFile(stk);
 
 	return STACK_NO_ERROR;
 }
 
-StackStatusCode OpenLogFile(Stack_t* stk) {
+StackStatusCode RunMainHtmlFile(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
 	char* open_log_file = NULL;
-	status = StrConcatenation("open ", Log_paths.main, &open_log_file, stk);
+	status = StrConcatenation("open ", Log_Names.files[MAIN].file_path, &open_log_file, stk);
 	STACK_ERROR_CHECK(status, stk);
 
 	system(open_log_file);
@@ -169,13 +208,16 @@ StackStatusCode StrConcatenation(const char* string1, const char* string2, char*
 	return STACK_NO_ERROR;
 }
 
-const char* ErrorsMessenger(StackStatusCode status) {
+const char* StackErrorsMessenger(StackStatusCode status) {
 	switch (status) {
-		case STACK_NO_ERROR: 			return "STACK NO ERROR";
-		case STACK_ALLOC_ERROR: 		return "STACK MEMORY ALLOCATION ERROR";
-		case STACK_FILE_OPEN_ERROR:		return "STACK FILE OPEN ERROR";
-		case STACK_DIMENSIONS_ERROR:	return "STACK DIMENSIONS ERROR";
-		case STACK_POINTER_ERROR:		return "STACK POINTER IS NULL";
+		case STACK_NO_ERROR: 			return "STACK ERROR - NO";
+		case STACK_ALLOC_ERROR: 		return "STACK ERROR - MEMORY ALLOCATION";
+		case STACK_FILE_OPEN_ERROR:		return "STACK ERROR - FILE WAS NOT OPENED";
+		case STACK_DIMENSIONS_ERROR:	return "STACK ERROR - WRONG DIMENSIONS OF STACK";
+		case STACK_POINTER_ERROR:		return "STACK ERROR - STACK POINTER IS NULL";
+		case STACK_DATA_POINTER_ERROR:	return "STACK ERROR - STACK DATA POINTER IS NULL";
+		case STACK_FILE_CLOSE_ERROR:	return "STACK ERROR - FILE WAS NOT CLOSED";
+		case STACK_UNDERFLOW:			return "STACK ERROR - 'ZERO' STACK";
 		default:			 			return "UNDEFINED ERROR";
 	}
 }

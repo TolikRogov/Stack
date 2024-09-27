@@ -4,6 +4,10 @@
 //	I) Html file with different dumps: 1) memory (calloc, realloc), 2) stack ctor, 3) stack push, 4) stack pop,
 //									  5) stack dtor, 6) stack verify, 7) Stack status code
 //	II) -I key (я пытался)
+//	III) STACK_RETURN -> Stack Verify -> Stack Dump
+//	IV) HexSpeak
+//	V) PROTECTION -> 1) Canary protection + 2) Hash protection
+//	VI) DUMP from DED (with conditional compilation in stack prototype)
 
 int main() {
 
@@ -11,7 +15,7 @@ int main() {
 
 	Stack_t stk = {};
 
-	status = StackCtor(&stk);
+	status = StackCtor(&stk, 10);
 	STACK_ERROR_CHECK(status, &stk);
 
 #ifdef HTML_DUMP

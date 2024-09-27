@@ -1,11 +1,15 @@
 #include "../include/utilities.hpp"
 
-StackStatusCode StackCtor(Stack_t* stk) {
+StackStatusCode StackCtor(Stack_t* stk, size_t capacity) {
 
-	stk->capacity = DEFAULT_CAPACITY;
-	stk->data = (Stack_elem_t*)calloc(stk->capacity, sizeof(Stack_elem_t));
-	if (!stk->data)
-		STACK_ERROR_CHECK(STACK_ALLOC_ERROR, stk);
+	stk->capacity = (capacity < DEFAULT_CAPACITY && capacity != 0 ? DEFAULT_CAPACITY : capacity);
+
+	if (stk->capacity) {
+		stk->data = (Stack_elem_t*)calloc(stk->capacity, sizeof(Stack_elem_t));
+		if (!stk->data)
+			STACK_ERROR_CHECK(STACK_ALLOC_ERROR, stk);
+	}
+
 	stk->size = 0;
 
 	return STACK_NO_ERROR;
@@ -55,11 +59,17 @@ StackStatusCode StackPop(Stack_t* stk, Stack_elem_t* value) {
 
 StackStatusCode StackVerify(Stack_t* stk) {
 
-	if (!stk || !stk->data)
-		STACK_ERROR_CHECK(STACK_POINTER_ERROR, stk);
+	if (!stk)
+		return STACK_POINTER_ERROR;
 
-	if (stk->capacity < 0 || stk->size < 0)
-		STACK_ERROR_CHECK(STACK_DIMENSIONS_ERROR, stk)
+	if (!stk->capacity && !stk->size && !stk->data)
+		return STACK_UNDERFLOW;
+
+	if (!stk->data)
+		return STACK_DATA_POINTER_ERROR;
+
+	if (stk->capacity < 0 || stk->size < 0 || stk->size > stk->capacity)
+		return STACK_DIMENSIONS_ERROR;
 
 	return STACK_NO_ERROR;
 }
@@ -73,7 +83,7 @@ StackStatusCode StackDtor(Stack_t* stk) {
 		stk->data = NULL;
 	}
 
-	printf("\n\033[32;6mDESTROY DONE!\033[0m\n\n");
+	printf("\n" GREEN("ALLOCATED MEMORY FREED!") "\n\n");
 
 	return STACK_NO_ERROR;
 }
