@@ -1,6 +1,13 @@
 #include "../include/utilities.hpp"
 
-StackStatusCode StackCtor(Stack_t* stk, size_t capacity) {
+StackStatusCode DoStackCtor(Stack_t* stk, size_t capacity) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+#ifdef HTML_DUMP
+	status = HtmlLogStarter(stk);
+	STACK_ERROR_CHECK(status, stk);
+#endif
 
 	stk->capacity = (capacity < DEFAULT_CAPACITY && capacity != 0 ? DEFAULT_CAPACITY : capacity);
 
@@ -15,12 +22,11 @@ StackStatusCode StackCtor(Stack_t* stk, size_t capacity) {
 	return STACK_NO_ERROR;
 }
 
-StackStatusCode StackPush(Stack_t* stk, Stack_elem_t value) {
+StackStatusCode DoStackPush(Stack_t* stk, Stack_elem_t value) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
-	status = StackVerify(stk);
-	STACK_ERROR_CHECK(status, stk);
+	STACK_VERIFY(stk);
 
 	if (stk->size == stk->capacity) {
 		stk->data = (Stack_elem_t*)realloc(stk->data, (stk->capacity *= 2) * sizeof(Stack_elem_t));
@@ -30,18 +36,16 @@ StackStatusCode StackPush(Stack_t* stk, Stack_elem_t value) {
 
 	*(stk->data + stk->size++) = value;
 
-	status = StackVerify(stk);
-	STACK_ERROR_CHECK(status, stk);
+	STACK_VERIFY(stk);
 
 	return STACK_NO_ERROR;
 }
 
-StackStatusCode StackPop(Stack_t* stk, Stack_elem_t* value) {
+StackStatusCode DoStackPop(Stack_t* stk, Stack_elem_t* value) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
-	status = StackVerify(stk);
-	STACK_ERROR_CHECK(status, stk);
+	STACK_VERIFY(stk);
 
 	if (4 * stk->size < stk->capacity && stk->size > DEFAULT_CAPACITY) {
 		stk->data = (Stack_elem_t*)realloc(stk->data, (stk->capacity = stk->size) * sizeof(Stack_elem_t));
@@ -49,15 +53,17 @@ StackStatusCode StackPop(Stack_t* stk, Stack_elem_t* value) {
 			STACK_ERROR_CHECK(STACK_ALLOC_ERROR, stk);
 	}
 
+	if (!stk->size)
+		STACK_ERROR_CHECK(STACK_EMPTY_ERROR, stk);
+
 	*value = *(stk->data + (stk->size--) - 1);
 
-	status = StackVerify(stk);
-	STACK_ERROR_CHECK(status, stk);
+	STACK_VERIFY(stk);
 
 	return STACK_NO_ERROR;
 }
 
-StackStatusCode StackVerify(Stack_t* stk) {
+StackStatusCode DoStackVerify(Stack_t* stk) {
 
 	if (!stk)
 		return STACK_POINTER_ERROR;
@@ -74,13 +80,32 @@ StackStatusCode StackVerify(Stack_t* stk) {
 	return STACK_NO_ERROR;
 }
 
-StackStatusCode StackDtor(Stack_t* stk) {
+StackStatusCode DoStackDtor(Stack_t* stk) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	STACK_VERIFY(stk);
+
+#ifdef HTML_DUMP
+	status = HtmlLogFinisher(stk);
+	STACK_ERROR_CHECK(status, stk);
+#endif
 
 	stk->capacity = TRASH;
 	stk->size 	  = TRASH;
+
 	if (stk->data) {
 		free(stk->data);
 		stk->data = NULL;
+	}
+
+	size_t size = sizeof(stk->log_names.files) / sizeof(stk->log_names.files[0]);
+
+	for (size_t i = 0; i < size; i++) {
+		if (stk->log_names.files[i].file_path) {
+			free(stk->log_names.files[i].file_path);
+			stk->log_names.files[i].file_path = NULL;
+		}
 	}
 
 	printf("\n" GREEN("ALLOCATED MEMORY FREED!") "\n\n");

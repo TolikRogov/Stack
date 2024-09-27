@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
+
 typedef int Stack_elem_t;
 
 enum StackStatusCode {
@@ -14,19 +15,22 @@ enum StackStatusCode {
 	STACK_POINTER_ERROR,
 	STACK_DATA_POINTER_ERROR,
 	STACK_DIMENSIONS_ERROR,
-	STACK_UNDERFLOW
+	STACK_UNDERFLOW,
+	STACK_EMPTY_ERROR
 };
 
 struct Stack_t {
 	Stack_elem_t* data;
 	size_t size;
 	size_t capacity;
+
+	HtmlNames log_names;
 };
 
-StackStatusCode StackCtor(Stack_t* stk, size_t capacity);
-StackStatusCode StackDtor(Stack_t* stk);
-StackStatusCode StackVerify(Stack_t* stk);
-StackStatusCode StackPush(Stack_t* stk, Stack_elem_t value);
-StackStatusCode StackPop(Stack_t* stk, Stack_elem_t* value);
+StackStatusCode DoStackCtor(Stack_t* stk, size_t capacity);
+StackStatusCode DoStackDtor(Stack_t* stk);
+StackStatusCode DoStackVerify(Stack_t* stk);
+StackStatusCode DoStackPush(Stack_t* stk, Stack_elem_t value);
+StackStatusCode DoStackPop(Stack_t* stk, Stack_elem_t* value);
 
 #endif //STACK_INCLUDE
