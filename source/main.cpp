@@ -12,7 +12,7 @@ int main() {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
-	Stack_t stk = {};
+	INIT_STACK(stk);
 
 	STACK_CTOR(&stk, 10);
 

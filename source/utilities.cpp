@@ -1,109 +1,161 @@
 #include "../include/utilities.hpp"
 
-StackStatusCode HtmlLogStarter(Stack_t* stk) {
+StackStatusCode HtmlMainLogStarter(Stack_t* stk) {
 
-	DIR* html_dir = opendir(stk->log_names.folder);
-	if (!html_dir)
-		MakeHtmlFolder(stk);
+	StackStatusCode status = STACK_NO_ERROR;
 
-	MakeHtmlFilePath(stk);
+	status = MakeLpFolders(stk);
+	STACK_ERROR_CHECK(status, stk);
 
-	FILE* log_file = fopen(stk->log_names.files[MAIN].file_path, "w");
-	if (!log_file)
+	status = MakeFilesPath(stk);
+	STACK_ERROR_CHECK(status, stk);
+
+	FILE* main_file = fopen(stk->log_parts[HTML].files[MAIN].file_path, "w");
+	if (!main_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
-	fprintf(log_file, "<!DOCTYPE HTML PUBLIC>\n");
-	fprintf(log_file, "<html>\n");
+	fprintf(main_file, "<!DOCTYPE HTML PUBLIC>\n");
+	fprintf(main_file, "<html>\n");
 
-	fprintf(log_file, "\t<head>\n");
-	fprintf(log_file, "\t\t<title>Stack Dump</title>\n");
-	fprintf(log_file, "\t</head>\n");
+	fprintf(main_file, "\t<head>\n");
+	fprintf(main_file, "\t\t<title>Stack Dump</title>\n");
 
-	fprintf(log_file, "\t<style>\n");
-	fprintf(log_file, "\t\t.anchor { \n\t\t\toutline: none; \n\t\t\ttext-decoration: none; \
-			\n\t\t\tpadding: 2px 1px 0; \n\t\t}\n");
-	fprintf(log_file, "\t\t.anchor:link { \n\t\t\tcolor: #fff; \n\t\t}\n");
-	fprintf(log_file, "\t\t.anchor:visited { \n\t\t\tcolor: #fff; \n\t\t}\n");
-	fprintf(log_file, "\t\t.anchor:focused { \n\t\t\tborder-bottom: 1px solid; \n\t\t\tbackground: #bae498; \n\t\t}\n");
+	fprintf(main_file, "\t\t<link rel='stylesheet' href='%s'>\n", stk->log_parts[STYLE].files[CSS].file_path);
 
-	fprintf(log_file, "\t\t.table_header > td > h3{ \n\t\t\tpadding: 10px 20px; \n\t\t}\n");
-	fprintf(log_file, "\t\t.stack_dump_number { \n\t\t\tcolor: turquoise; \n\t\t\ttext-align: center; \n\t\t}\n");
-	fprintf(log_file, "\t\t.stack_pointer { \n\t\t\tcolor: red; \n\t\t\ttext-align: center; \n\t\t}\n");
-	fprintf(log_file, "\t\t.stack_data_pointer { \n\t\t\tcolor: brown; \n\t\t\ttext-align: center; \n\t\t}\n");
-	fprintf(log_file, "\t\t.stack_data { \n\t\t\tcolor: green; \n\t\t\ttext-align: left; \n\t\t}\n");
-	fprintf(log_file, "\t\t.stack_capacity { \n\t\t\tcolor: blue; \n\t\t\ttext-align: center; \n\t\t}\n");
-	fprintf(log_file, "\t\t.stack_size { \n\t\t\tcolor: violet; \n\t\t\ttext-align: center; \n\t\t}\n");
+	fprintf(main_file, "\t</head>\n");
 
-	fprintf(log_file, "\t\t.tb_stk { \n\t\t\twidth: 90%%; \n\t\t\tborder: 15px solid #F2F8F8; \
-			\n\t\t\tborder-collapse: collapse; \n\t\t\tmargin: auto; \
-			\n\t\t\ttable-layout: auto; \n\t\t\tmargin-bottom: 20px; \
-			\n\t\t\tborder-top: 5px solid #F2F8F8; \n\t\t}\n");
-	fprintf(log_file, "\t\t.tb_stk th { \n\t\t\tfont-weight: bold; \n\t\t\tpadding: 5px; \
-			\n\t\t\tbackground: #F2F8F8; \n\t\t\tborder: none; \
-			\n\t\t\tborder-bottom: 5px solid #F2F8F8; \n\t\t}\n");
-	fprintf(log_file, "\t\t.tb_stk td { \n\t\t\tpadding: 10px; \n\t\t\tborder: none; \
-			\n\t\t\tborder-bottom: 5px solid #F2F8F8; \n\t\t}\n");
-	fprintf(log_file, "\t\t.table_header > td { \n\t\t\ttext-align: center; \n\t\t}\n");
-	fprintf(log_file, "\t\t.tb_stk tbody tr:nth-child(odd) { \n\t\t\tbackground: #fff; \n\t\t}\n");
-	fprintf(log_file, "\t\t.tb_stk tbody tr:nth-child(even) { \n\t\t\tbackground: #F7F7F7; \n\t\t}\n");
+	status = CssLogStarter(stk);
+	STACK_ERROR_CHECK(status, stk);
 
-	fprintf(log_file, "\t\t.time { \n\t\t\tcolor: #4A235A; \n\t\t\tfont-size: 30px; \
-			\n\t\t\tmargin: center; \n\t\t}\n");
+	fprintf(main_file, "\t<body>\n");
+	fprintf(main_file, "\t\t<h1 align='center' name='top'><tt>MEGA DUMP</tt></h1>\n");
+	fprintf(main_file, "\t\t<p><a href='#down' class='anchor'><button class='btn'><tt>Down</tt></button></a></p><br>\n");
 
-	fprintf(log_file, "\t\t.btn { \n\t\t\tborder: none; \n\t\t\tborder-radius: 15px; \n\t\t\ttext-decoration: none; \
-    		\n\t\t\tcolor: white; \n\t\t\tbackground: #0B63F6; \n\t\t\tbox-shadow: 0 5px 0 #003CC5; \
-			\n\t\t\tfont-size: 16px; \n\t\t\tpadding-block: 8px; \n\t\t\tpadding-inline: 15px; \n\t\t}\n");
-	fprintf(log_file, "\t\t.btn:hover { \n\t\t\tbackground: #003CC5; \n\t\t\tbox-shadow: none; \n\t\t\tposition: relative; \
-    		\n\t\t\ttop: 5px; \n\t\t}\n");
+#ifdef HTML_DUMP
+	fprintf(main_file, "\t\t<p class = 'stack_info'><tt>Stack_t[%p] born at %s:%zu, name '%s'</tt></p>\n",
+			stk, stk->file_name, stk->line, stk->stack_name);
+#endif
 
-	fprintf(log_file, "\t\th1[name='top'] { \n\t\t\tcolor: #4B0082; \n\t\t\tfont-style: italic; \
-			\n\t\t\ttext-decoration: underline; \n\t\t}\n");
-	fprintf(log_file, "\t</style>\n");
+	// fprintf(main_file, "\t\t<table class='tb_stk'>\n");
+	// fprintf(main_file, "\t\t\t<tr class='table_header'>\n");
+	// fprintf(main_file, "\t\t\t\t<td><tt><h3>Output number</tt></h3></td>\n");
+	// fprintf(main_file, "\t\t\t\t<td><tt><h3>Stack pointer</tt></h3></td>\n");
+	// fprintf(main_file, "\t\t\t\t<td><tt><h3>Stack data pointer</tt></h3></td>\n");
+	// fprintf(main_file, "\t\t\t\t<td><tt><h3>Data</tt></h3></td>\n");
+	// fprintf(main_file, "\t\t\t\t<td><tt><h3>Stack capacity</h3></tt></td>\n");
+	// fprintf(main_file, "\t\t\t\t<td><tt><h3>Stack size</h3></tt></td>\n");
+	// fprintf(main_file, "\t\t\t</tr>\n");
 
-	fprintf(log_file, "\t<body>\n");
-	fprintf(log_file, "\t\t<h1 align='center' name='top'><tt>MEGA DUMP</tt></h1>\n");
-	fprintf(log_file, "\t\t<p><a href='#down' class='anchor'><button class='btn'><tt>Down</tt></button></a></p><br>\n");
-
-	fprintf(log_file, "\t\t<table class='tb_stk'>\n");
-	fprintf(log_file, "\t\t\t<tr class='table_header'>\n");
-	fprintf(log_file, "\t\t\t\t<td><tt><h3>Output number</tt></h3></td>\n");
-	fprintf(log_file, "\t\t\t\t<td><tt><h3>Stack pointer</tt></h3></td>\n");
-	fprintf(log_file, "\t\t\t\t<td><tt><h3>Stack data pointer</tt></h3></td>\n");
-	fprintf(log_file, "\t\t\t\t<td><tt><h3>Data</tt></h3></td>\n");
-	fprintf(log_file, "\t\t\t\t<td><tt><h3>Stack capacity</h3></tt></td>\n");
-	fprintf(log_file, "\t\t\t\t<td><tt><h3>Stack size</h3></tt></td>\n");
-	fprintf(log_file, "\t\t\t</tr>\n");
-
-	if (fclose(log_file))
+	if (fclose(main_file))
 		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
 
 	return STACK_NO_ERROR;
 }
 
-StackStatusCode MakeHtmlFolder(Stack_t* stk) {
+StackStatusCode CssLogStarter(Stack_t* stk) {
 
-	StackStatusCode status = STACK_NO_ERROR;
+	FILE* styles_file = fopen(stk->log_parts[STYLE].files[CSS].file_path, "w");
+	if (!styles_file)
+		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
-	char* make_folder = NULL;
-	status = StrConcatenation("mkdir ", stk->log_names.folder, &make_folder, stk);
-	STACK_ERROR_CHECK(status, stk);
+	fprintf(styles_file, ".anchor { \n\toutline: none; \n\ttext-decoration: none; \
+			\n\tpadding: 2px 1px 0; \n}\n");
+	fprintf(styles_file, ".anchor:link { \n\tcolor: #fff; \n}\n\n");
+	fprintf(styles_file, ".anchor:visited { \n\tcolor: #fff; \n}\n\n");
+	fprintf(styles_file, ".anchor:focused { \n\tborder-bottom: 1px solid; \n\tbackground: #bae498; \n}\n\n");
 
-	system(make_folder);
-	if (make_folder)
-		free(make_folder);
+	fprintf(styles_file, ".table_header > td > h3{ \n\tpadding: 10px 20px; \n}\n\n");
+	fprintf(styles_file, ".stack_dump_number { \n\tcolor: turquoise; \n\ttext-align: center; \n}\n\n");
+	fprintf(styles_file, ".stack_pointer { \n\tcolor: red; \n\ttext-align: center; \n}\n\n");
+	fprintf(styles_file, ".stack_data_pointer { \n\tcolor: brown; \n\ttext-align: center; \n}\n\n");
+	fprintf(styles_file, ".stack_data { \n\tcolor: green; \n\ttext-align: left; \n}\n\n");
+	fprintf(styles_file, ".stack_capacity { \n\tcolor: blue; \n\ttext-align: center; \n}\n\n");
+	fprintf(styles_file, ".stack_size { \n\tcolor: violet; \n\ttext-align: center; \n}\n\n");
+
+	fprintf(styles_file, ".tb_stk { \n\twidth: 90%%; \n\tborder: 15px solid #F2F8F8; \
+			\n\tborder-collapse: collapse; \n\tmargin: auto; \
+			\n\ttable-layout: auto; \n\tmargin-bottom: 20px; \
+			\n\tborder-top: 5px solid #F2F8F8; \n}\n\n");
+	fprintf(styles_file, ".tb_stk th { \n\tfont-weight: bold; \n\tpadding: 5px; \
+			\n\tbackground: #F2F8F8; \n\tborder: none; \
+			\n\tborder-bottom: 5px solid #F2F8F8; \n}\n\n");
+	fprintf(styles_file, ".tb_stk td { \n\tpadding: 10px; \n\tborder: none; \
+			\n\tborder-bottom: 5px solid #F2F8F8; \n}\n\n");
+	fprintf(styles_file, ".table_header > td { \n\ttext-align: center; \n\t\t}\n\n");
+	fprintf(styles_file, ".tb_stk tbody tr:nth-child(odd) { \n\tbackground: #fff; \n\t\t}\n\n");
+	fprintf(styles_file, ".tb_stk tbody tr:nth-child(even) { \n\tbackground: #F7F7F7; \n}\n\n");
+
+	fprintf(styles_file, ".time { \n\tcolor: #4A235A; \n\tfont-size: 30px; \
+			\n\tmargin: center; \n}\n\n");
+
+	fprintf(styles_file, ".btn { \n\tborder: none; \n\tborder-radius: 15px; \n\ttext-decoration: none; \
+    		\n\tcolor: white; \n\tbackground: #0B63F6; \n\tbox-shadow: 0 5px 0 #003CC5; \
+			\n\tfont-size: 16px; \n\tpadding-block: 8px; \n\tpadding-inline: 15px; \n}\n\n");
+	fprintf(styles_file, ".btn:hover { \n\tbackground: #003CC5; \n\tbox-shadow: none; \n\tposition: relative; \
+    		\n\ttop: 5px; \n}\n\n");
+
+	fprintf(styles_file, "h1[name='top'] { \n\tcolor: #4B0082; \n\tfont-style: italic; \
+			\n\ttext-decoration: underline; \n}\n\n");
+
+	if (fclose(styles_file))
+		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
 
 	return STACK_NO_ERROR;
 }
 
-StackStatusCode MakeHtmlFilePath(Stack_t* stk) {
+StackStatusCode HtmlMainLogFinisher(Stack_t* stk) {
+
+	FILE* main_file = fopen(stk->log_parts[HTML].files[MAIN].file_path, "a");
+	if (!main_file)
+		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
+
+	//fprintf(main_file, "\t\t</table>\n");
+	fprintf(main_file, "\t\t<p><a href='#top' name='down' class='anchor'><button class='btn'><tt>TOP</tt></button></a></p>\n");
+	fprintf(main_file, "\t</body>\n");
+	fprintf(main_file, "</html>\n");
+
+	if (fclose(main_file))
+		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
+
+	RunMainHtmlFile(stk);
+
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode MakeLpFolders(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
-	size_t size = sizeof(stk->log_names.files) / sizeof(stk->log_names.files[0]);
+	for (size_t i = 0; i < LP_END; i++) {
+		DIR* cur_dir = opendir(stk->log_parts[i].folder);
+		if (cur_dir) {
+			closedir(cur_dir);
+			continue;
+		}
 
-	for (size_t i = 0; i < size; i++) {
-		status = StrConcatenation(stk->log_names.folder, stk->log_names.files[i].file_name, &stk->log_names.files[i].file_path, stk);
+		char* make_folder = NULL;
+		status = StrConcatenation("mkdir ", stk->log_parts[i].folder, &make_folder, stk);
 		STACK_ERROR_CHECK(status, stk);
+
+		system(make_folder);
+		if (make_folder)
+			free(make_folder);
+	}
+
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode MakeFilesPath(Stack_t* stk) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	for (size_t i = 0; i < LP_END; i++) {
+
+		for (size_t j = 0; j < stk->log_parts[i].files_size; j++) {
+			status = StrConcatenation(stk->log_parts[i].folder, stk->log_parts[i].files[j].file_name,
+									&stk->log_parts[i].files[j].file_path, stk);
+			STACK_ERROR_CHECK(status, stk);
+		}
 	}
 
 	return STACK_NO_ERROR;
@@ -111,47 +163,35 @@ StackStatusCode MakeHtmlFilePath(Stack_t* stk) {
 
 StackStatusCode DoStackDump(Stack_t* stk) {
 
-	static size_t number = 1;
+	//static size_t number = 1;
 
-	FILE* log_file = fopen(stk->log_names.files[MAIN].file_path, "a");
-	if (!log_file)
+	FILE* main_file = fopen(stk->log_parts[HTML].files[MAIN].file_path, "a");
+	if (!main_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
-	fprintf(log_file, "\t\t\t<tr>\n");
-	fprintf(log_file, "\t\t\t\t<td class = 'stack_dump_number'><tt>%zu</tt></td>\n", number++);
-	fprintf(log_file, "\t\t\t\t<td class = 'stack_pointer'><tt>%p</tt></td>\n", stk);
-	fprintf(log_file, "\t\t\t\t<td class = 'stack_data_pointer'><tt>%p</tt></td>\n", stk->data);
-
-	fprintf(log_file, "\t\t\t\t<td class = 'stack_data'><tt>");
-	for (size_t i = 0; i < stk->size; i++)
-		fprintf(log_file, "%d ", *(stk->data + i));
-	fprintf(log_file, "</tt></td>\n");
-
-	fprintf(log_file, "\t\t\t\t<td class = 'stack_capacity'><tt>%zu</tt></td>\n", stk->capacity);
-	fprintf(log_file, "\t\t\t\t<td class = 'stack_size'><tt>%zu</tt></td>\n", stk->size);
-	fprintf(log_file, "\t\t\t</tr>\n");
-
-	if (fclose(log_file))
-		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
-
-	return STACK_NO_ERROR;
-}
-
-StackStatusCode HtmlLogFinisher(Stack_t* stk) {
-
-	FILE* log_file = fopen(stk->log_names.files[MAIN].file_path, "a");
-	if (!log_file)
+	FILE* table_file = fopen(stk->log_parts[HTML].files[TABLE].file_path, "a");
+	if (!table_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
-	fprintf(log_file, "\t\t</table>\n");
-	fprintf(log_file, "\t\t<p><a href='#top' name='down' class='anchor'><button class='btn'><tt>TOP</tt></button></a></p>\n");
-	fprintf(log_file, "\t</body>\n");
-	fprintf(log_file, "</html>\n");
+// 	fprintf(log_file, "\t\t\t<tr>\n");
+// 	fprintf(log_file, "\t\t\t\t<td class = 'stack_dump_number'><tt>%zu</tt></td>\n", number++);
+// 	fprintf(log_file, "\t\t\t\t<td class = 'stack_pointer'><tt>%p</tt></td>\n", stk);
+// 	fprintf(log_file, "\t\t\t\t<td class = 'stack_data_pointer'><tt>%p</tt></td>\n", stk->data);
+//
+// 	fprintf(log_file, "\t\t\t\t<td class = 'stack_data'><tt>");
+// 	for (size_t i = 0; i < stk->size; i++)
+// 		fprintf(log_file, "%d ", *(stk->data + i));
+// 	fprintf(log_file, "</tt></td>\n");
+//
+// 	fprintf(log_file, "\t\t\t\t<td class = 'stack_capacity'><tt>%zu</tt></td>\n", stk->capacity);
+// 	fprintf(log_file, "\t\t\t\t<td class = 'stack_size'><tt>%zu</tt></td>\n", stk->size);
+// 	fprintf(log_file, "\t\t\t</tr>\n");
 
-	if (fclose(log_file))
+	if (fclose(main_file))
 		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
 
-	RunMainHtmlFile(stk);
+	if (fclose(table_file))
+		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
 
 	return STACK_NO_ERROR;
 }
@@ -161,7 +201,7 @@ StackStatusCode RunMainHtmlFile(Stack_t* stk) {
 	StackStatusCode status = STACK_NO_ERROR;
 
 	char* open_log_file = NULL;
-	status = StrConcatenation("open ", stk->log_names.files[MAIN].file_path, &open_log_file, stk);
+	status = StrConcatenation("open ", stk->log_parts[HTML].files[MAIN].file_path, &open_log_file, stk);
 	STACK_ERROR_CHECK(status, stk);
 
 	system(open_log_file);

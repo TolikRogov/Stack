@@ -1,14 +1,15 @@
 #ifndef UTILITIES_INCLUDE
 #define UTILITIES_INCLUDE
 
-struct HtmlFile {
+struct File {
 	const char* file_name;
 	char* file_path;
 };
 
-struct HtmlNames {
-	const char* folder = "html_log_eblan/";
-	HtmlFile files[1] = { {.file_name = "main.html"} };
+struct Log_Parts {
+	const char* folder;
+	unsigned long files_size;
+	File* files;
 };
 
 #include "../include/stack.hpp"
@@ -16,6 +17,12 @@ struct HtmlNames {
 #define RED(str) 		"\033[31;1m" str "\033[0m"
 #define YELLOW(str) 	"\033[33;4m" str "\033[0m"
 #define GREEN(str) 		"\033[32;6m" str "\033[0m"
+
+#ifdef HTML_DUMP
+#define INIT_STACK(stk) Stack_t stk = { #stk, __FILE__, __LINE__ }
+#else
+#define INIT_STACK(stk) Stack_t stk = {}
+#endif
 
 #define STACK_ERROR_CHECK(status, stk) {																	 	 		 \
 	if (status != STACK_NO_ERROR) {																						\
@@ -67,17 +74,33 @@ struct HtmlNames {
 const size_t DEFAULT_CAPACITY = 16;
 const size_t TRASH = 0xBEDADEDBEDA;
 
-enum HtmlFiles {
-	MAIN
+enum LOG_PARTS {
+	HTML,
+	STYLE,
+	LP_END
 };
 
-StackStatusCode HtmlLogStarter(Stack_t* stk);
-StackStatusCode HtmlLogFinisher(Stack_t* stk);
+enum HTML_PARTS {
+	MAIN,
+	TABLE,
+	HP_END
+};
+
+enum STYLE_PARTS {
+	CSS,
+	SP_END
+};
+
+StackStatusCode CssLogStarter(Stack_t* stk);
+StackStatusCode HtmlMainLogStarter(Stack_t* stk);
+StackStatusCode HtmlMainLogFinisher(Stack_t* stk);
+
 StackStatusCode DoStackDump(Stack_t* stk);
 
 StackStatusCode RunMainHtmlFile(Stack_t* stk);
-StackStatusCode MakeHtmlFolder(Stack_t* stk);
-StackStatusCode MakeHtmlFilePath(Stack_t* stk);
+
+StackStatusCode MakeLpFolders(Stack_t* stk);
+StackStatusCode MakeFilesPath(Stack_t* stk);
 
 const char* StackErrorsMessenger(StackStatusCode status);
 
