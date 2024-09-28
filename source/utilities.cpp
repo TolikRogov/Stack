@@ -1,60 +1,144 @@
 #include "../include/utilities.hpp"
 
-StackStatusCode HtmlMainLogStarter(Stack_t* stk) {
+const char* StackErrorsMessenger(StackStatusCode status) {
+	switch (status) {
+		case STACK_NO_ERROR: 			return "STACK ERROR - NO";
+		case STACK_ALLOC_ERROR: 		return "STACK ERROR - MEMORY ALLOCATION";
+		case STACK_FILE_OPEN_ERROR:		return "STACK ERROR - FILE WAS NOT OPENED";
+		case STACK_DIMENSIONS_ERROR:	return "STACK ERROR - WRONG DIMENSIONS OF STACK";
+		case STACK_POINTER_ERROR:		return "STACK ERROR - STACK POINTER IS NULL";
+		case STACK_DATA_POINTER_ERROR:	return "STACK ERROR - STACK DATA POINTER IS NULL";
+		case STACK_FILE_CLOSE_ERROR:	return "STACK ERROR - FILE WAS NOT CLOSED";
+		case STACK_UNDERFLOW:			return "STACK ERROR - 'ZERO' STACK";
+		case STACK_EMPTY_ERROR:			return "STACK ERROR - STACK IS EMPTY";
+		default:			 			return "UNDEFINED ERROR";
+	}
+}
+
+StackStatusCode DirCtor(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
-	status = MakeLpFolders(stk);
+	status = MakeDirsPaths(stk);
 	STACK_ERROR_CHECK(status, stk);
 
-	status = MakeFilesPath(stk);
+	status = MakeFilesPaths(stk);
 	STACK_ERROR_CHECK(status, stk);
 
-	FILE* main_file = fopen(stk->log_parts[HTML].files[MAIN].file_path, "w");
-	if (!main_file)
-		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
-
-	fprintf(main_file, "<!DOCTYPE HTML PUBLIC>\n");
-	fprintf(main_file, "<html>\n");
-
-	fprintf(main_file, "\t<head>\n");
-	fprintf(main_file, "\t\t<title>Stack Dump</title>\n");
-
-	fprintf(main_file, "\t\t<link rel='stylesheet' href='%s'>\n", stk->log_parts[STYLE].files[CSS].file_path);
-
-	fprintf(main_file, "\t</head>\n");
-
-	status = CssLogStarter(stk);
+	status = MakeDirsFolders(stk);
 	STACK_ERROR_CHECK(status, stk);
 
-	fprintf(main_file, "\t<body>\n");
-	fprintf(main_file, "\t\t<h1 align='center' name='top'><tt>MEGA DUMP</tt></h1>\n");
-	fprintf(main_file, "\t\t<p><a href='#down' class='anchor'><button class='btn'><tt>Down</tt></button></a></p><br>\n");
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode MakeDirsPaths(Stack_t* stk) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	status = StrConcatenation(stk->log.dir_name, stk->log.styles.c_dir_name, &stk->log.styles.c_dir_path, stk);
+	STACK_ERROR_CHECK(status, stk);
+
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode MakeFilesPaths(Stack_t* stk) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	for (size_t i = 0; i < stk->log.cnt_files; i++) {
+		status = StrConcatenation(stk->log.dir_name, stk->log.files[i].file_name, &stk->log.files[i].file_path, stk);
+		STACK_ERROR_CHECK(status, stk);
+	}
+
+	for (size_t i = 0; i < stk->log.styles.c_dir_cnt_files; i++) {
+		status = StrConcatenation(stk->log.styles.c_dir_path, stk->log.styles.files[i].file_name, &stk->log.styles.files[i].file_path, stk);
+		STACK_ERROR_CHECK(status, stk);
+	}
+
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode MakeDirsFolders(Stack_t* stk) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	const char* folders[] = { stk->log.dir_name,
+							  stk->log.styles.c_dir_path };
+
+	size_t size = sizeof(folders) / sizeof(folders[0]);
+
+	for (size_t i = 0; i < size; i++) {
+		char* make_folder = NULL;
+		status = StrConcatenation("mkdir ", folders[i], &make_folder, stk);
+		STACK_ERROR_CHECK(status, stk);
+
+		DIR* cur_dir = opendir(folders[i]);
+		if (cur_dir) {
+			closedir(cur_dir);
+			continue;
+		}
+
+		system(make_folder);
+		if (make_folder)
+			free(make_folder);
+	}
+
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode HtmlLogStarter(Stack_t* stk) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	for (size_t i = 0; i < stk->log.cnt_files; i++) {
+
+		FILE* log_file = fopen(stk->log.files[i].file_path, "w");
+		if (!log_file)
+			STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
+
+		fprintf(log_file, "<!DOCTYPE HTML PUBLIC>\n");
+		fprintf(log_file, "<html>\n");
+
+		fprintf(log_file, "\t<head>\n");
+		fprintf(log_file, "\t\t<title>Stack Dump</title>\n");
+
+		char* include_style = NULL;
+		status = StrConcatenation(stk->log.styles.c_dir_name, stk->log.styles.files[CSS].file_name, &include_style, stk);
+		STACK_ERROR_CHECK(status, stk);
+
+		fprintf(log_file, "\t\t<link rel='stylesheet' href='%s'>\n", include_style);
+		if (include_style)
+			free(include_style);
+
+		fprintf(log_file, "\t</head>\n");
+
+		status = CssLogStarter(stk);
+		STACK_ERROR_CHECK(status, stk);
+
+		fprintf(log_file, "\t<body>\n");
+		fprintf(log_file, "\t\t<h1 align='center' name='top'><tt>MEGA DUMP</tt></h1>\n");
+		fprintf(log_file, "\t\t<p><a href='#down' class='anchor'><button class='btn'><tt>Down</tt></button></a></p><br>\n");
+		fprintf(log_file, "\t\t<p><a href='%s' class='anchor'><button class='btn'><tt>%s</tt></button></a></p><br>\n",
+				stk->log.files[(i + 1) % (stk->log.cnt_files)].file_name, stk->log.files[(i + 1) % (stk->log.cnt_files)].file_name);
 
 #ifdef HTML_DUMP
-	fprintf(main_file, "\t\t<p class = 'stack_info'><tt>Stack_t[%p] born at %s:%zu, name '%s'</tt></p>\n",
-			stk, stk->file_name, stk->line, stk->stack_name);
+		fprintf(log_file, "\t\t<p class = 'stack_info'><tt>Stack_t[%p] born at %s:%zu, name '%s'</tt></p>\n",
+				stk, stk->stack_info.file_name, stk->stack_info.line, stk->stack_info.stack_name);
 #endif
 
-	// fprintf(main_file, "\t\t<table class='tb_stk'>\n");
-	// fprintf(main_file, "\t\t\t<tr class='table_header'>\n");
-	// fprintf(main_file, "\t\t\t\t<td><tt><h3>Output number</tt></h3></td>\n");
-	// fprintf(main_file, "\t\t\t\t<td><tt><h3>Stack pointer</tt></h3></td>\n");
-	// fprintf(main_file, "\t\t\t\t<td><tt><h3>Stack data pointer</tt></h3></td>\n");
-	// fprintf(main_file, "\t\t\t\t<td><tt><h3>Data</tt></h3></td>\n");
-	// fprintf(main_file, "\t\t\t\t<td><tt><h3>Stack capacity</h3></tt></td>\n");
-	// fprintf(main_file, "\t\t\t\t<td><tt><h3>Stack size</h3></tt></td>\n");
-	// fprintf(main_file, "\t\t\t</tr>\n");
+		if (fclose(log_file))
+			STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
+	}
 
-	if (fclose(main_file))
-		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
+	status = HtmlTableLog(stk);
+	STACK_ERROR_CHECK(status, stk);
 
 	return STACK_NO_ERROR;
 }
 
 StackStatusCode CssLogStarter(Stack_t* stk) {
 
-	FILE* styles_file = fopen(stk->log_parts[STYLE].files[CSS].file_path, "w");
+	FILE* styles_file = fopen(stk->log.styles.files[CSS].file_path, "w");
 	if (!styles_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
@@ -103,95 +187,60 @@ StackStatusCode CssLogStarter(Stack_t* stk) {
 	return STACK_NO_ERROR;
 }
 
-StackStatusCode HtmlMainLogFinisher(Stack_t* stk) {
+StackStatusCode HtmlTableLog(Stack_t* stk) {
 
-	FILE* main_file = fopen(stk->log_parts[HTML].files[MAIN].file_path, "a");
-	if (!main_file)
-		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
-
-	//fprintf(main_file, "\t\t</table>\n");
-	fprintf(main_file, "\t\t<p><a href='#top' name='down' class='anchor'><button class='btn'><tt>TOP</tt></button></a></p>\n");
-	fprintf(main_file, "\t</body>\n");
-	fprintf(main_file, "</html>\n");
-
-	if (fclose(main_file))
-		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
-
-	RunMainHtmlFile(stk);
-
-	return STACK_NO_ERROR;
-}
-
-StackStatusCode MakeLpFolders(Stack_t* stk) {
-
-	StackStatusCode status = STACK_NO_ERROR;
-
-	for (size_t i = 0; i < LP_END; i++) {
-		DIR* cur_dir = opendir(stk->log_parts[i].folder);
-		if (cur_dir) {
-			closedir(cur_dir);
-			continue;
-		}
-
-		char* make_folder = NULL;
-		status = StrConcatenation("mkdir ", stk->log_parts[i].folder, &make_folder, stk);
-		STACK_ERROR_CHECK(status, stk);
-
-		system(make_folder);
-		if (make_folder)
-			free(make_folder);
-	}
-
-	return STACK_NO_ERROR;
-}
-
-StackStatusCode MakeFilesPath(Stack_t* stk) {
-
-	StackStatusCode status = STACK_NO_ERROR;
-
-	for (size_t i = 0; i < LP_END; i++) {
-
-		for (size_t j = 0; j < stk->log_parts[i].files_size; j++) {
-			status = StrConcatenation(stk->log_parts[i].folder, stk->log_parts[i].files[j].file_name,
-									&stk->log_parts[i].files[j].file_path, stk);
-			STACK_ERROR_CHECK(status, stk);
-		}
-	}
-
-	return STACK_NO_ERROR;
-}
-
-StackStatusCode DoStackDump(Stack_t* stk) {
-
-	//static size_t number = 1;
-
-	FILE* main_file = fopen(stk->log_parts[HTML].files[MAIN].file_path, "a");
-	if (!main_file)
-		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
-
-	FILE* table_file = fopen(stk->log_parts[HTML].files[TABLE].file_path, "a");
+	FILE* table_file = fopen(stk->log.files[TABLE].file_path, "a");
 	if (!table_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
-// 	fprintf(log_file, "\t\t\t<tr>\n");
-// 	fprintf(log_file, "\t\t\t\t<td class = 'stack_dump_number'><tt>%zu</tt></td>\n", number++);
-// 	fprintf(log_file, "\t\t\t\t<td class = 'stack_pointer'><tt>%p</tt></td>\n", stk);
-// 	fprintf(log_file, "\t\t\t\t<td class = 'stack_data_pointer'><tt>%p</tt></td>\n", stk->data);
-//
-// 	fprintf(log_file, "\t\t\t\t<td class = 'stack_data'><tt>");
-// 	for (size_t i = 0; i < stk->size; i++)
-// 		fprintf(log_file, "%d ", *(stk->data + i));
-// 	fprintf(log_file, "</tt></td>\n");
-//
-// 	fprintf(log_file, "\t\t\t\t<td class = 'stack_capacity'><tt>%zu</tt></td>\n", stk->capacity);
-// 	fprintf(log_file, "\t\t\t\t<td class = 'stack_size'><tt>%zu</tt></td>\n", stk->size);
-// 	fprintf(log_file, "\t\t\t</tr>\n");
+	fprintf(table_file, "\t\t<table class='tb_stk'>\n");
+	fprintf(table_file, "\t\t\t<tr class='table_header'>\n");
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Output number</tt></h3></td>\n");
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Stack pointer</tt></h3></td>\n");
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Stack data pointer</tt></h3></td>\n");
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Data</tt></h3></td>\n");
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Stack capacity</h3></tt></td>\n");
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Stack size</h3></tt></td>\n");
+	fprintf(table_file, "\t\t\t</tr>\n");
 
-	if (fclose(main_file))
+	if(fclose(table_file))
 		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
+
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode HtmlTableLogFinisher(Stack_t* stk) {
+
+	FILE* table_file = fopen(stk->log.files[TABLE].file_path, "a");
+	if (!table_file)
+		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
+
+	fprintf(table_file, "\t\t</table>\n");
 
 	if (fclose(table_file))
 		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
+
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode HtmlLogFinisher(Stack_t* stk) {
+
+	HtmlTableLogFinisher(stk);
+
+	for (size_t i = 0; i < stk->log.cnt_files; i++) {
+		FILE* log_file = fopen(stk->log.files[i].file_path, "a");
+		if (!log_file)
+			STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
+
+		fprintf(log_file, "\t\t<p><a href='#top' name='down' class='anchor'><button class='btn'><tt>TOP</tt></button></a></p>\n");
+		fprintf(log_file, "\t</body>\n");
+		fprintf(log_file, "</html>\n");
+
+		if (fclose(log_file))
+			STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
+	}
+
+	RunMainHtmlFile(stk);
 
 	return STACK_NO_ERROR;
 }
@@ -201,12 +250,47 @@ StackStatusCode RunMainHtmlFile(Stack_t* stk) {
 	StackStatusCode status = STACK_NO_ERROR;
 
 	char* open_log_file = NULL;
-	status = StrConcatenation("open ", stk->log_parts[HTML].files[MAIN].file_path, &open_log_file, stk);
+	status = StrConcatenation("open ", stk->log.files[MAIN].file_path, &open_log_file, stk);
 	STACK_ERROR_CHECK(status, stk);
 
 	system(open_log_file);
 	if (open_log_file)
 		free(open_log_file);
+
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode DoStackDumpMain(Stack_t* stk) {
+
+
+
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode DoStackDumpTable(Stack_t* stk) {
+
+	static size_t number = 1;
+
+	FILE* table_file = fopen(stk->log.files[TABLE].file_path, "a");
+	if (!table_file)
+		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
+
+	fprintf(table_file, "\t\t\t<tr>\n");
+	fprintf(table_file, "\t\t\t\t<td class = 'stack_dump_number'><tt>%zu</tt></td>\n", number++);
+	fprintf(table_file, "\t\t\t\t<td class = 'stack_pointer'><tt>%p</tt></td>\n", stk);
+	fprintf(table_file, "\t\t\t\t<td class = 'stack_data_pointer'><tt>%p</tt></td>\n", stk->data);
+
+	fprintf(table_file, "\t\t\t\t<td class = 'stack_data'><tt>");
+	for (size_t i = 0; i < stk->size; i++)
+		fprintf(table_file, "%d ", *(stk->data + i));
+	fprintf(table_file, "</tt></td>\n");
+
+	fprintf(table_file, "\t\t\t\t<td class = 'stack_capacity'><tt>%zu</tt></td>\n", stk->capacity);
+	fprintf(table_file, "\t\t\t\t<td class = 'stack_size'><tt>%zu</tt></td>\n", stk->size);
+	fprintf(table_file, "\t\t\t</tr>\n");
+
+	if (fclose(table_file))
+		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
 
 	return STACK_NO_ERROR;
 }
@@ -241,19 +325,4 @@ StackStatusCode StrConcatenation(const char* string1, const char* string2, char*
 	*(*str_out + i) = '\0';
 
 	return STACK_NO_ERROR;
-}
-
-const char* StackErrorsMessenger(StackStatusCode status) {
-	switch (status) {
-		case STACK_NO_ERROR: 			return "STACK ERROR - NO";
-		case STACK_ALLOC_ERROR: 		return "STACK ERROR - MEMORY ALLOCATION";
-		case STACK_FILE_OPEN_ERROR:		return "STACK ERROR - FILE WAS NOT OPENED";
-		case STACK_DIMENSIONS_ERROR:	return "STACK ERROR - WRONG DIMENSIONS OF STACK";
-		case STACK_POINTER_ERROR:		return "STACK ERROR - STACK POINTER IS NULL";
-		case STACK_DATA_POINTER_ERROR:	return "STACK ERROR - STACK DATA POINTER IS NULL";
-		case STACK_FILE_CLOSE_ERROR:	return "STACK ERROR - FILE WAS NOT CLOSED";
-		case STACK_UNDERFLOW:			return "STACK ERROR - 'ZERO' STACK";
-		case STACK_EMPTY_ERROR:			return "STACK ERROR - STACK IS EMPTY";
-		default:			 			return "UNDEFINED ERROR";
-	}
 }

@@ -1,15 +1,33 @@
 #ifndef UTILITIES_INCLUDE
 #define UTILITIES_INCLUDE
 
+#include "../include/config.hpp"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <dirent.h>
+#include <math.h>
+
 struct File {
 	const char* file_name;
 	char* file_path;
 };
 
-struct Log_Parts {
-	const char* folder;
-	unsigned long files_size;
-	File* files;
+struct Dir {
+	const char* dir_name = "log_eblan/";
+
+	size_t cnt_files = 2;
+	File files[2] = { {.file_name = "main.html"},
+					 {.file_name = "table.html"} };
+
+	size_t cnt_dirs = 1;
+	struct ChildDir {
+		const char* c_dir_name = "css/";
+		char* c_dir_path;
+
+		size_t c_dir_cnt_files = 1;
+		File files[1] = { { .file_name = "style.css" } };
+	} styles;
 };
 
 #include "../include/stack.hpp"
@@ -19,7 +37,7 @@ struct Log_Parts {
 #define GREEN(str) 		"\033[32;6m" str "\033[0m"
 
 #ifdef HTML_DUMP
-#define INIT_STACK(stk) Stack_t stk = { #stk, __FILE__, __LINE__ }
+#define INIT_STACK(stk) Stack_t stk = { .stack_info = {#stk, __FILE__, __LINE__}}
 #else
 #define INIT_STACK(stk) Stack_t stk = {}
 #endif
@@ -36,7 +54,9 @@ struct Log_Parts {
 
 #ifdef HTML_DUMP
 #define DUMP(stk) {				 	  		 \
-	status = DoStackDump(stk);	    		\
+	status = DoStackDumpMain(stk);	    	\
+	STACK_ERROR_CHECK(status, stk);			\
+	status = DoStackDumpTable(stk);			\
 	STACK_ERROR_CHECK(status, stk);			\
 }
 #else
@@ -74,33 +94,32 @@ struct Log_Parts {
 const size_t DEFAULT_CAPACITY = 16;
 const size_t TRASH = 0xBEDADEDBEDA;
 
-enum LOG_PARTS {
-	HTML,
-	STYLE,
-	LP_END
-};
-
-enum HTML_PARTS {
+enum HTML {
 	MAIN,
-	TABLE,
-	HP_END
+	TABLE
 };
 
-enum STYLE_PARTS {
-	CSS,
-	SP_END
+enum STYLES {
+	CSS
 };
 
+StackStatusCode DirCtor(Stack_t* stk);
+
+StackStatusCode MakeDirsPaths(Stack_t* stk);
+StackStatusCode MakeFilesPaths(Stack_t* stk);
+StackStatusCode MakeDirsFolders(Stack_t* stk);
+
+StackStatusCode HtmlLogStarter(Stack_t* stk);
 StackStatusCode CssLogStarter(Stack_t* stk);
-StackStatusCode HtmlMainLogStarter(Stack_t* stk);
-StackStatusCode HtmlMainLogFinisher(Stack_t* stk);
 
-StackStatusCode DoStackDump(Stack_t* stk);
+StackStatusCode HtmlTableLog(Stack_t* stk);
 
+StackStatusCode HtmlLogFinisher(Stack_t* stk);
+StackStatusCode HtmlTableLogFinisher(Stack_t* stk);
 StackStatusCode RunMainHtmlFile(Stack_t* stk);
 
-StackStatusCode MakeLpFolders(Stack_t* stk);
-StackStatusCode MakeFilesPath(Stack_t* stk);
+StackStatusCode DoStackDumpMain(Stack_t* stk);
+StackStatusCode DoStackDumpTable(Stack_t* stk);
 
 const char* StackErrorsMessenger(StackStatusCode status);
 

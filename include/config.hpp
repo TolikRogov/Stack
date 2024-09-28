@@ -1,0 +1,3 @@
+#define HTML_DUMP
+#define CANARY_PROTECTION
+#define HASH_PROTECTION
