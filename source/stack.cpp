@@ -7,6 +7,14 @@ StackStatusCode DoStackCtor(Stack_t* stk, size_t capacity) {
 	if (!stk)
 		STACK_ERROR_CHECK(STACK_POINTER_ERROR, stk);
 
+#ifdef HTML_DUMP
+	status = DirCtor(stk);
+	STACK_ERROR_CHECK(status, stk);
+
+	status = HtmlLogStarter(stk);
+	STACK_ERROR_CHECK(status, stk);
+#endif
+
 #ifdef CANARY_PROTECTION
 	stk->canary1 = STACK_CANARY_HEX;
 	stk->canary2 = STACK_CANARY_HEX;
@@ -23,24 +31,31 @@ StackStatusCode DoStackCtor(Stack_t* stk, size_t capacity) {
 	*(Canary_t*)((char*)stk->data - sizeof(Canary_t)) = DATA_CANARY_HEX;
 	*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)) = DATA_CANARY_HEX;
 
-	StackMemset(stk, 0, stk->capacity, POISON);
+#ifdef HASH_PROTECTION
+	stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+#endif
+
+	status = StackMemset(stk, 0, stk->capacity, POISON);
+	STACK_ERROR_CHECK(status, stk);
 #else
 	if (stk->capacity != 0) {
 		stk->data = (Stack_elem_t*)calloc(stk->capacity, sizeof(Stack_elem_t));
 		if (!stk->data)
 			STACK_ERROR_CHECK(STACK_ALLOC_ERROR, stk);
-		StackMemset(stk, 0, stk->capacity, POISON);
+
+#ifdef HASH_PROTECTION
+		stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+#endif
+
+		status = StackMemset(stk, 0, stk->capacity, POISON);
+		STACK_ERROR_CHECK(status, stk);
 	}
 #endif
 
 	stk->size = 0;
 
-#ifdef HTML_DUMP
-	status = DirCtor(stk);
-	STACK_ERROR_CHECK(status, stk);
-
-	status = HtmlLogStarter(stk);
-	STACK_ERROR_CHECK(status, stk);
+#ifdef HASH_PROTECTION
+	stk->hash = DJB2Hash(stk, sizeof(Stack_t));
 #endif
 
 	STACK_VERIFY(stk);
@@ -66,12 +81,25 @@ StackStatusCode DoStackPush(Stack_t* stk, Stack_elem_t value) {
 		if (!stk->data)
 			STACK_ERROR_CHECK(STACK_ALLOC_ERROR, stk);
 
-		StackMemset(stk, stk->size, stk->capacity - stk->size, POISON);
+#ifdef HASH_PROTECTION
+		stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+#endif
+
+		status = StackMemset(stk, stk->size, stk->capacity - stk->size, POISON);
+		STACK_ERROR_CHECK(status, stk);
+
+#ifdef HASH_PROTECTION
+		stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+#endif
 	}
 
 	STACK_VERIFY(stk);
 
 	*(stk->data + stk->size++) = value;
+
+#ifdef HASH_PROTECTION
+	stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+#endif
 
 	STACK_VERIFY(stk);
 
@@ -95,6 +123,10 @@ StackStatusCode DoStackPop(Stack_t* stk, Stack_elem_t* value) {
 #endif
 		if (!stk->data)
 			STACK_ERROR_CHECK(STACK_ALLOC_ERROR, stk);
+
+#ifdef HASH_PROTECTION
+		stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+#endif
 	}
 
 	STACK_VERIFY(stk);
@@ -105,6 +137,10 @@ StackStatusCode DoStackPop(Stack_t* stk, Stack_elem_t* value) {
 	*value = *(stk->data + (--stk->size));
 	*(stk->data + stk->size) = POISON;
 
+#ifdef HASH_PROTECTION
+	stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+#endif
+
 	STACK_VERIFY(stk);
 
 	return STACK_NO_ERROR;
@@ -113,36 +149,62 @@ StackStatusCode DoStackPop(Stack_t* stk, Stack_elem_t* value) {
 StackStatusCode DoStackVerify(Stack_t* stk) {
 
 	if (!stk)
-		return STACK_POINTER_ERROR;
+		STACK_ERROR_CHECK(STACK_POINTER_ERROR, stk);
+
+#ifdef HASH_PROTECTION
+	if (stk->hash != DJB2Hash(stk, sizeof(Stack_t)))
+		STACK_ERROR_CHECK(STACK_HASH_ERROR, stk);
+#endif
 
 	if (!stk->capacity && !stk->size)
-		return STACK_UNDERFLOW;
+		stk->status |= (1 << STACK_UNDERFLOW);
+
+	if (!stk->data)
+		stk->status |= (1 << STACK_DATA_POINTER_ERROR);
+
+	if (stk->capacity < 0)
+		stk->status |= (1 << STACK_CAPACITY_ERROR);
+
+	if (stk->size < 0)
+		stk->status |= (1 << STACK_SIZE_ERROR);
+
+	if (stk->size > stk->capacity)
+		stk->status |= (1 << STACK_DIMENSIONS_ERROR);
 
 #ifdef CANARY_PROTECTION
 	if (!CompareDouble(stk->canary1, STACK_CANARY_HEX))
-		return STACK_LEFT_CANARY_ERROR;
+		stk->status |= (1 << STACK_LEFT_CANARY_ERROR);
 
 	if (!CompareDouble(stk->canary2, STACK_CANARY_HEX))
-		return STACK_RIGHT_CANARY_ERROR;
+		stk->status |= (1 << STACK_RIGHT_CANARY_ERROR);
 
-	if (!CompareDouble(*(Canary_t*)((char*)stk->data - sizeof(Canary_t)), DATA_CANARY_HEX))
-		return DATA_LEFT_CANARY_ERROR;
+	if (stk->data) {
+		if (!CompareDouble(*(Canary_t*)((char*)stk->data - sizeof(Canary_t)), DATA_CANARY_HEX))
+			stk->status |= (1 << STACK_DATA_LEFT_CANARY_ERROR);
 
-	if (!CompareDouble(*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)), DATA_CANARY_HEX))
-		return DATA_RIGHT_CANARY_ERROR;
+		if (!CompareDouble(*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)), DATA_CANARY_HEX))
+			stk->status |= (1 << STACK_DATA_RIGHT_CANARY_ERROR);
+	}
 #endif
 
-	if (!stk->data)
-		return STACK_DATA_POINTER_ERROR;
+	for (size_t i = 0; i < sizeof(stk->status) * 8; i++)
+		if (((1 << i) & stk->status) >> i)
+			return STACK_ERROR;
 
-	if (stk->capacity < 0)
-		return STACK_CAPACITY_ERROR;
+#ifdef HASH_PROTECTION
+	stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+#endif
 
-	if (stk->size < 0)
-		return STACK_SIZE_ERROR;
+	return STACK_NO_ERROR;
+}
 
-	if (stk->size > stk->capacity)
-		return STACK_DIMENSIONS_ERROR;
+StackStatusCode CheckerStackStatus(Stack_t* stk, const char* file, const char* func, const size_t line) {
+
+	for (size_t i = 0; i < sizeof(stk->status) * 8; i++) {
+		if (((1 << i) & stk->status) >> i)
+			fprintf(stderr, "\n\n" RED("Error (code %zu): %s, ") YELLOW("File: %s, Function: %s, Line: %zu\n\n"),
+				i, StackErrorsMessenger((StackStatusCode)i), file, func, line);
+	}
 
 	return STACK_NO_ERROR;
 }
@@ -152,6 +214,11 @@ StackStatusCode DoStackDtor(Stack_t* stk) {
 	if (!stk)
 		STACK_ERROR_CHECK(STACK_POINTER_ERROR, stk);
 
+#ifdef HASH_PROTECTION
+	stk->hash 		= TRASH;
+	stk->data_hash 	= TRASH;
+#endif
+
 #ifdef CANARY_PROTECTION
 	stk->canary1 = TRASH;
 	stk->canary2 = TRASH;
@@ -160,23 +227,24 @@ StackStatusCode DoStackDtor(Stack_t* stk) {
 	stk->capacity = TRASH;
 	stk->size 	  = TRASH;
 
-	if (!stk->data)
-		STACK_ERROR_CHECK(STACK_DATA_POINTER_ERROR, stk);
+	if (stk->data) {
 
-	char* alloc_memory = NULL;
+		char* alloc_memory = NULL;
 
 #ifdef CANARY_PROTECTION
-	alloc_memory = ((char*)stk->data - sizeof(Canary_t));
+		alloc_memory = ((char*)stk->data - sizeof(Canary_t));
 #else
-	alloc_memory = (char*)stk->data;
+		alloc_memory = (char*)stk->data;
 #endif
 
-	free(alloc_memory);
-	alloc_memory = NULL;
+		free(alloc_memory);
+		alloc_memory = NULL;
 
 #ifdef N_DEBUG
-	printf("\n" GREEN("ALLOCATED MEMORY FREED!") "\n\n");
+		printf("\n\n" GREEN("ALLOCATED MEMORY FREED") "\n\n");
 #endif
+
+	}
 
 #ifdef HTML_DUMP
 	StackStatusCode status = STACK_NO_ERROR;
@@ -185,5 +253,19 @@ StackStatusCode DoStackDtor(Stack_t* stk) {
 	STACK_ERROR_CHECK(status, stk);
 #endif
 
+	stk->log = {};
+
 	return STACK_NO_ERROR;
 }
+
+#ifdef HASH_PROTECTION
+Hash_t DJB2Hash(const void* array, const size_t size_in_bytes) {
+
+	Hash_t hash = 5381;
+
+	for (size_t i = sizeof(Hash_t); i < size_in_bytes; i++)
+		hash = hash * 33 ^ (Hash_t)(*((const char*)array + i));
+
+	return hash;
+}
+#endif

@@ -44,8 +44,10 @@ struct Dir {
 
 #define STACK_ERROR_CHECK(status, stk) {																	 	 		 \
 	if (status != STACK_NO_ERROR) {																						\
-		fprintf(stderr, RED("Error (code %d): %s, ") YELLOW("File: %s, Function: %s, Line: %d\n"),   					\
-				status, StackErrorsMessenger(status), __FILE__, __PRETTY_FUNCTION__, __LINE__);							\
+		CheckerStackStatus(stk, __FILE__, __PRETTY_FUNCTION__, __LINE__);												\
+		if (status != STACK_ERROR)																						\
+			fprintf(stderr, "\n\n" RED("Error (code %d): %s, ") YELLOW("File: %s, Function: %s, Line: %d\n\n"),   		\
+					status, StackErrorsMessenger(status), __FILE__, __PRETTY_FUNCTION__, __LINE__);						\
 		if (!(fclose(stderr)))																							\
 			DoStackDtor(stk);																							\
 		return status;																									\
@@ -63,34 +65,34 @@ struct Dir {
 #define DUMP(stk, func)
 #endif
 
-#define STACK_CTOR(stk, capacity) {					 \
-	if (capacity < 0)								\
-		STACK_ERROR_CHECK(STACK_SIZE_ERROR, stk);	\
-	status = DoStackCtor(stk, capacity);			\
-	STACK_ERROR_CHECK(status, stk);					\
-	DUMP(stk, "STACK_CTOR");						\
+#define STACK_CTOR(stk, capacity) {					 	 			 \
+	if (capacity < 0)												\
+		STACK_ERROR_CHECK(STACK_CAPACITY_ERROR, stk);				\
+	StackStatusCode status = DoStackCtor(stk, (size_t)capacity);	\
+	STACK_ERROR_CHECK(status, stk);									\
+	DUMP(stk, "STACK_CTOR");										\
 }
 
-#define STACK_PUSH(stk, value) {		 	 \
-	status = DoStackPush(stk, value);		\
-	STACK_ERROR_CHECK(status, stk);			\
-	DUMP(stk, "STACK_PUSH");				\
+#define STACK_PUSH(stk, value) {		 						 	 \
+	StackStatusCode status = DoStackPush(stk, value);				\
+	STACK_ERROR_CHECK(status, stk);									\
+	DUMP(stk, "STACK_PUSH");										\
 }
 
-#define STACK_POP(stk, var_pointer) {		 \
-	status = DoStackPop(stk, var_pointer); 	\
-	STACK_ERROR_CHECK(status, stk);			\
-	DUMP(stk, "STACK_POP");					\
+#define STACK_POP(stk, var_pointer) {		 				 		 \
+	StackStatusCode status = DoStackPop(stk, var_pointer); 			\
+	STACK_ERROR_CHECK(status, stk);									\
+	DUMP(stk, "STACK_POP");											\
 }
 
-#define STACK_VERIFY(stk) {					 \
-	status = DoStackVerify(stk);			\
-	STACK_ERROR_CHECK(status, stk);			\
+#define STACK_VERIFY(stk) {					 				 		 \
+	status = DoStackVerify(stk);									\
+	STACK_ERROR_CHECK(status, stk);									\
 }
 
-#define STACK_DTOR(stk) {					 \
-	status = DoStackDtor(stk);				\
-	STACK_ERROR_CHECK(status, stk);			\
+#define STACK_DTOR(stk) {					 				 		 \
+	StackStatusCode status = DoStackDtor(stk);						\
+	STACK_ERROR_CHECK(status, stk);									\
 }
 
 const size_t 		DEFAULT_CAPACITY 	= 16;

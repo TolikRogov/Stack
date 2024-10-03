@@ -2,22 +2,39 @@
 
 const char* StackErrorsMessenger(StackStatusCode status) {
 	switch (status) {
-		case STACK_NO_ERROR: 			return "STACK ERROR - NO";
-		case STACK_ALLOC_ERROR: 		return "STACK ERROR - MEMORY ALLOCATION";
-		case STACK_FILE_OPEN_ERROR:		return "STACK ERROR - FILE WAS NOT OPENED";
-		case STACK_SIZE_ERROR:			return "STACK ERROR - WRONG STACK SIZE";
-		case STACK_CAPACITY_ERROR:		return "STACK ERROR - WRONG STACK CAPACITY";
-		case STACK_DIMENSIONS_ERROR:	return "STACK ERROR - STACK SIZE GREATER THAN CAPACITY";
-		case STACK_POINTER_ERROR:		return "STACK ERROR - STACK POINTER IS NULL";
-		case STACK_DATA_POINTER_ERROR:	return "STACK ERROR - STACK DATA POINTER IS NULL";
-		case STACK_FILE_CLOSE_ERROR:	return "STACK ERROR - FILE WAS NOT CLOSED";
-		case STACK_UNDERFLOW:			return "STACK ERROR - STACK UNDERFLOW";
-		case STACK_POP_ERROR:			return "STACK ERROR - NOTHING TO POP FROM STACK";
-		case STACK_LEFT_CANARY_ERROR:	return "STACK ERROR - LEFT STACK CANARY IS WRONG";
-		case STACK_RIGHT_CANARY_ERROR:	return "STACK ERROR - RIGHT STACK CANARY IS WRONG";
-		case DATA_LEFT_CANARY_ERROR:	return "STACK ERROR - LEFT DATA CANARY IS WRONG";
-		case DATA_RIGHT_CANARY_ERROR:	return "STACK ERROR - RIGHT DATA CANARY IS WRONG";
-		default:			 			return "UNDEFINED ERROR";
+		case STACK_NO_ERROR: 				return "STACK ERROR - NO ERRORS";
+		case STACK_ERROR:					return "STACK ERROR";
+
+		case STACK_ALLOC_ERROR: 			return "STACK ERROR - MEMORY ALLOCATION FAILED";
+
+		case STACK_FILE_CLOSE_ERROR:		return "STACK ERROR - FILE WAS NOT CLOSED";
+		case STACK_FILE_OPEN_ERROR:			return "STACK ERROR - FILE WAS NOT OPENED";
+
+		case STACK_DIR_OPEN_ERROR:			return "STACK ERROR - DIRECTORY WAS NOT OPENED";
+		case STACK_DIR_CLOSE_ERROR:			return "STACK ERROR - DIRECTORY WAS NOT CLOSED";
+
+		case STACK_DIR_DELETE_ERROR:		return "STACK ERROR - DIRECTORY WAS NOT DELETED";
+		case STACK_DIR_MAKE_ERROR:			return "STACK ERROR - DIRECTORY WAS NOT MADE";
+		case STACK_RUN_HTML_ERROR:			return "STACK ERROR - HTML FILE WAS NOT RUNNING";
+
+		case STACK_UNDERFLOW:				return "STACK ERROR - STACK UNDERFLOW";
+		case STACK_SIZE_ERROR:				return "STACK ERROR - WRONG STACK SIZE";
+		case STACK_CAPACITY_ERROR:			return "STACK ERROR - WRONG STACK CAPACITY";
+		case STACK_DIMENSIONS_ERROR:		return "STACK ERROR - STACK SIZE GREATER THAN CAPACITY";
+
+		case STACK_POINTER_ERROR:			return "STACK ERROR - STACK POINTER IS NULL";
+		case STACK_DATA_POINTER_ERROR:		return "STACK ERROR - STACK DATA POINTER IS NULL";
+
+		case STACK_POP_ERROR:				return "STACK ERROR - NOTHING TO POP FROM STACK";
+
+		case STACK_LEFT_CANARY_ERROR:		return "STACK ERROR - LEFT STACK CANARY IS WRONG";
+		case STACK_RIGHT_CANARY_ERROR:		return "STACK ERROR - RIGHT STACK CANARY IS WRONG";
+
+		case STACK_DATA_LEFT_CANARY_ERROR:	return "STACK ERROR - LEFT DATA CANARY IS WRONG";
+		case STACK_DATA_RIGHT_CANARY_ERROR:	return "STACK ERROR - RIGHT DATA CANARY IS WRONG";
+
+		case STACK_HASH_ERROR:				return "STACK ERROR - STACK HASH HAS CHANGED";
+		default:			 				return "UNDEFINED ERROR";
 	}
 }
 
@@ -25,15 +42,13 @@ StackStatusCode DirCtor(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
-	STACK_VERIFY(stk);
+	status = DeleteLogDir(stk);
+	STACK_ERROR_CHECK(status, stk);
 
 	status = MakeDirsPaths(stk);
 	STACK_ERROR_CHECK(status, stk);
 
 	status = MakeFilesPaths(stk);
-	STACK_ERROR_CHECK(status, stk);
-
-	status = DeleteLogDir(stk);
 	STACK_ERROR_CHECK(status, stk);
 
 	status = MakeDirsFolders(stk);
@@ -46,8 +61,6 @@ StackStatusCode MakeDirsPaths(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
-	STACK_VERIFY(stk);
-
 	status = StrConcatenation(stk->log.dir_name, stk->log.styles.c_dir_name, &stk->log.styles.c_dir_path, stk);
 	STACK_ERROR_CHECK(status, stk);
 
@@ -57,8 +70,6 @@ StackStatusCode MakeDirsPaths(Stack_t* stk) {
 StackStatusCode MakeFilesPaths(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
-
-	STACK_VERIFY(stk);
 
 	for (size_t i = 0; i < stk->log.cnt_files; i++) {
 		status = StrConcatenation(stk->log.dir_name, stk->log.files[i].file_name, &stk->log.files[i].file_path, stk);
@@ -77,8 +88,6 @@ StackStatusCode MakeDirsFolders(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
-	STACK_VERIFY(stk);
-
 	const char* folders[] = { stk->log.dir_name,
 							  stk->log.styles.c_dir_path };
 
@@ -91,11 +100,13 @@ StackStatusCode MakeDirsFolders(Stack_t* stk) {
 
 		DIR* cur_dir = opendir(folders[i]);
 		if (cur_dir) {
-			closedir(cur_dir);
+			if(closedir(cur_dir))
+				STACK_ERROR_CHECK(STACK_DIR_CLOSE_ERROR, stk);
 			continue;
 		}
 
-		system(make_folder);
+		if(system(make_folder))
+			STACK_ERROR_CHECK(STACK_DIR_MAKE_ERROR, stk);
 		if (make_folder) {
 			free(make_folder);
 			make_folder = NULL;
@@ -110,30 +121,33 @@ StackStatusCode DeleteLogDir(Stack_t* stk) {
 	StackStatusCode status = STACK_NO_ERROR;
 
 	DIR* log_dir = opendir(stk->log.dir_name);
-	if (log_dir) {
-		closedir(log_dir);
+	if (!log_dir)
+		STACK_ERROR_CHECK(STACK_DIR_OPEN_ERROR, stk);
 
-		char* delete_folder = NULL;
-		status = StrConcatenation("rm -rf ", stk->log.dir_name, &delete_folder, stk);
-		STACK_ERROR_CHECK(status, stk);
+	if(closedir(log_dir))
+		STACK_ERROR_CHECK(STACK_DIR_CLOSE_ERROR, stk);
 
-		system(delete_folder);
-		if (delete_folder) {
-			free(delete_folder);
-			delete_folder = NULL;
-		}
+	char* delete_folder = NULL;
+	status = StrConcatenation("rm -rf ", stk->log.dir_name, &delete_folder, stk);
+	STACK_ERROR_CHECK(status, stk);
+
+	if(system(delete_folder))
+		STACK_ERROR_CHECK(STACK_DIR_DELETE_ERROR, stk);
+	if (delete_folder) {
+		free(delete_folder);
+		delete_folder = NULL;
+	}
 
 #ifdef N_DEBUG
-		log_dir = opendir(stk->log.dir_name);
-		if (log_dir) {
-			closedir(log_dir);
-			printf("\n" RED("LOG DIR WAS NOT REMOVED\n") "\n\n");
-		}
-		else
-			printf("\n" GREEN("LOG DIRECTORY WAS REMOVED SUCCESSFULLY!") "\n\n");
-#endif
-
+	log_dir = opendir(stk->log.dir_name);
+	if (log_dir) {
+		if(closedir(log_dir))
+			STACK_ERROR_CHECK(STACK_DIR_CLOSE_ERROR, stk);
+		printf("\n\n" RED("LOG DIR WAS NOT REMOVED\n") "\n\n");
 	}
+	else
+		printf("\n\n" GREEN("LOG DIRECTORY WAS REMOVED!") "\n\n");
+#endif
 
 	return STACK_NO_ERROR;
 }
@@ -141,8 +155,6 @@ StackStatusCode DeleteLogDir(Stack_t* stk) {
 StackStatusCode HtmlLogStarter(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
-
-	STACK_VERIFY(stk);
 
 	for (size_t i = 0; i < stk->log.cnt_files; i++) {
 
@@ -174,8 +186,11 @@ StackStatusCode HtmlLogStarter(Stack_t* stk) {
 		fprintf(log_file, "\t<body>\n");
 		fprintf(log_file, "\t\t<h1 align='center' name='top'><tt>MEGA DUMP</tt></h1>\n");
 		fprintf(log_file, "\t\t<p><a href='#down' class='anchor'><button class='btn'><tt>Down</tt></button></a>\n");
-		fprintf(log_file, "\t\t<a href='%s' class='anchor'><button class='btn'><tt>%s</tt></button></a></p><br>\n",
-				stk->log.files[(i + 1) % (stk->log.cnt_files)].file_name, stk->log.files[(i + 1) % (stk->log.cnt_files)].file_name);
+		for (size_t j = 0; j < stk->log.cnt_files; j++)
+			if (i != j)
+				fprintf(log_file, "\t\t<a href='%s' class='anchor'><button class='btn'><tt>%s</tt></button></a>\n",
+						stk->log.files[j].file_name, stk->log.files[j].file_name);
+		fprintf(log_file, "\t\t</p><br>\n");
 
 #ifdef HTML_DUMP
 		fprintf(log_file, "\t\t<p class = 'stack_info'><tt>Stack_t[%p] born at %s:%zu, name '%s'</tt></p>\n",
@@ -193,10 +208,6 @@ StackStatusCode HtmlLogStarter(Stack_t* stk) {
 }
 
 StackStatusCode CssLogStarter(Stack_t* stk) {
-
-	StackStatusCode status = STACK_NO_ERROR;
-
-	STACK_VERIFY(stk);
 
 	FILE* styles_file = fopen(stk->log.styles.files[CSS].file_path, "w");
 	if (!styles_file)
@@ -249,10 +260,6 @@ StackStatusCode CssLogStarter(Stack_t* stk) {
 
 StackStatusCode HtmlTableLog(Stack_t* stk) {
 
-	StackStatusCode status = STACK_NO_ERROR;
-
-	STACK_VERIFY(stk);
-
 	FILE* table_file = fopen(stk->log.files[TABLE].file_path, "a");
 	if (!table_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
@@ -289,7 +296,10 @@ StackStatusCode HtmlTableLogFinisher(Stack_t* stk) {
 
 StackStatusCode HtmlLogFinisher(Stack_t* stk) {
 
-	HtmlTableLogFinisher(stk);
+	StackStatusCode status = STACK_NO_ERROR;
+
+	status = HtmlTableLogFinisher(stk);
+	STACK_ERROR_CHECK(status, stk);
 
 	for (size_t i = 0; i < stk->log.cnt_files; i++) {
 		FILE* log_file = fopen(stk->log.files[i].file_path, "a");
@@ -317,7 +327,13 @@ StackStatusCode RunMainHtmlFile(Stack_t* stk) {
 	status = StrConcatenation("open ", stk->log.files[MAIN].file_path, &open_log_file, stk);
 	STACK_ERROR_CHECK(status, stk);
 
-	system(open_log_file);
+	if(system(open_log_file))
+		STACK_ERROR_CHECK(STACK_RUN_HTML_ERROR, stk);
+
+#ifdef N_DEBUG
+	printf("\n\n" GREEN("HTML FILE WAS RUN") "\n\n");
+#endif
+
 	if (open_log_file) {
 		free(open_log_file);
 		open_log_file = NULL;
@@ -328,9 +344,8 @@ StackStatusCode RunMainHtmlFile(Stack_t* stk) {
 
 StackStatusCode DoStackDumpMain(Stack_t* stk, DumpInfo dump_info) {
 
-	StackStatusCode status = STACK_NO_ERROR;
-
-	STACK_VERIFY(stk);
+	if (!stk)
+		STACK_ERROR_CHECK(STACK_POINTER_ERROR, stk);
 
 	FILE* main_file = fopen(stk->log.files[MAIN].file_path, "a");
 	if (!main_file)
@@ -339,6 +354,10 @@ StackStatusCode DoStackDumpMain(Stack_t* stk, DumpInfo dump_info) {
 	fprintf(main_file, "\t\t<p><tt>called from %s: %zu (after %s)</tt></p>\n\t\t<tt><pre>\t{</pre></tt>\n",
 			dump_info.file, dump_info.line, dump_info.func);
 
+#ifdef HASH_PROTECTION
+	fprintf(main_file, "\t\t<p><tt><pre>\t\tstack hash = %zu</pre></tt></p>\n", stk->hash);
+#endif
+
 #ifdef CANARY_PROTECTION
 	fprintf(main_file, "\t\t<p><tt><pre>\t\tstack canary1 = 0x%X</pre></tt></p>\n", (int)stk->canary1);
 #endif
@@ -346,21 +365,24 @@ StackStatusCode DoStackDumpMain(Stack_t* stk, DumpInfo dump_info) {
 	fprintf(main_file, "\t\t<p><tt><pre>\t\tcapacity = %zu</pre></tt></p>\n", stk->capacity);
 	fprintf(main_file, "\t\t<p><tt><pre>\t\tsize = %zu</pre></tt></p>\n", stk->size);
 
+	if (stk->data) {
 #ifdef CANARY_PROTECTION
-	fprintf(main_file, "\t\t<p><tt><pre>\t\tdata canary1 [%p] = 0x%X</pre></tt></p>\n", (Canary_t*)((char*)stk->data - sizeof(Canary_t)),
-																				(int)(*(Canary_t*)((char*)stk->data - sizeof(Canary_t))));
+		fprintf(main_file, "\t\t<p><tt><pre>\t\tdata canary1 [%p] = 0x%X</pre></tt></p>\n", (Canary_t*)((char*)stk->data - sizeof(Canary_t)),
+																					(int)(*(Canary_t*)((char*)stk->data - sizeof(Canary_t))));
 #endif
 
-	fprintf(main_file, "\t\t<p><tt><pre>\t\tdata [%p]:</pre></tt></p>\n\t\t<tt><pre>\t\t\t{</pre></tt>\n", stk->data);
-	for (size_t i = 0; i < stk->capacity; i++)
-		(i < stk->size) ? fprintf(main_file, "\t\t<p><tt><pre>\t\t\t\t*[%zu] = %lg</pre></tt></p>\n", i, *(stk->data + i)) :
-						  fprintf(main_file, "\t\t<p><tt><pre>\t\t\t\t [%zu] = %lg (POISON)</pre></tt></p>\n", i, *(stk->data + i));
-	fprintf(main_file, "\t\t<tt><pre>\t\t\t}</pre></tt>\n");
+		fprintf(main_file, "\t\t<p><tt><pre>\t\tdata [%p]:</pre></tt></p>\n\t\t<tt><pre>\t\t\t{</pre></tt>\n", stk->data);
+		for (size_t i = 0; i < stk->capacity; i++)
+			(i < stk->size) ? fprintf(main_file, "\t\t<p><tt><pre>\t\t\t\t*[%zu] = %lg</pre></tt></p>\n", i, *(stk->data + i)) :
+							fprintf(main_file, "\t\t<p><tt><pre>\t\t\t\t [%zu] = %lg (POISON)</pre></tt></p>\n", i, *(stk->data + i));
+		fprintf(main_file, "\t\t<tt><pre>\t\t\t}</pre></tt>\n");
+	}
 
 #ifdef CANARY_PROTECTION
-	fprintf(main_file, "\t\t<p><tt><pre>\t\tdata canary2 [%p] = 0x%X</pre></tt></p>\n",
-			(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)),
-			(int)(*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t))));
+	if (stk->data)
+		fprintf(main_file, "\t\t<p><tt><pre>\t\tdata canary2 [%p] = 0x%X</pre></tt></p>\n",
+				(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)),
+				(int)(*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t))));
 
 	fprintf(main_file, "\t\t<p><tt><pre>\t\tstack canary2 = 0x%X</pre></tt></p>\n", (int)stk->canary2);
 #endif
