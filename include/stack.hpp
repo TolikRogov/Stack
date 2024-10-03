@@ -1,7 +1,11 @@
 #ifndef STACK_INCLUDE
 #define STACK_INCLUDE
 
-typedef int Stack_elem_t;
+typedef double Stack_elem_t;
+
+#ifdef CANARY_PROTECTION
+	typedef double Canary_t;
+#endif
 
 enum StackStatusCode {
 	STACK_NO_ERROR,
@@ -10,9 +14,14 @@ enum StackStatusCode {
 	STACK_FILE_CLOSE_ERROR,
 	STACK_POINTER_ERROR,
 	STACK_DATA_POINTER_ERROR,
+	STACK_SIZE_ERROR,
+	STACK_CAPACITY_ERROR,
 	STACK_DIMENSIONS_ERROR,
 	STACK_UNDERFLOW,
-	STACK_EMPTY_ERROR
+	STACK_EMPTY_ERROR,
+	STACK_LEFT_CANARY_ERROR,
+	STACK_RIGHT_CANARY_ERROR,
+	DATA_LEFT_CANARY_ERROR
 };
 
 struct StackLogInfo {
@@ -23,6 +32,10 @@ struct StackLogInfo {
 
 struct Stack_t {
 
+#ifdef CANARY_PROTECTION
+	Canary_t canary1;
+#endif
+
 #ifdef HTML_DUMP
 	StackLogInfo stack_info;
 #endif
@@ -32,6 +45,10 @@ struct Stack_t {
 	size_t capacity;
 
 	Dir log;
+
+#ifdef CANARY_PROTECTION
+	Canary_t canary2;
+#endif
 };
 
 StackStatusCode DoStackCtor(Stack_t* stk, size_t capacity);

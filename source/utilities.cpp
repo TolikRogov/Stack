@@ -5,12 +5,17 @@ const char* StackErrorsMessenger(StackStatusCode status) {
 		case STACK_NO_ERROR: 			return "STACK ERROR - NO";
 		case STACK_ALLOC_ERROR: 		return "STACK ERROR - MEMORY ALLOCATION";
 		case STACK_FILE_OPEN_ERROR:		return "STACK ERROR - FILE WAS NOT OPENED";
-		case STACK_DIMENSIONS_ERROR:	return "STACK ERROR - WRONG DIMENSIONS OF STACK";
+		case STACK_SIZE_ERROR:			return "STACK ERROR - WRONG STACK SIZE";
+		case STACK_CAPACITY_ERROR:		return "STACK ERROR - WRONG STACK CAPACITY";
+		case STACK_DIMENSIONS_ERROR:	return "STACK ERROR - STACK SIZE GREATER THAN CAPACITY";
 		case STACK_POINTER_ERROR:		return "STACK ERROR - STACK POINTER IS NULL";
 		case STACK_DATA_POINTER_ERROR:	return "STACK ERROR - STACK DATA POINTER IS NULL";
 		case STACK_FILE_CLOSE_ERROR:	return "STACK ERROR - FILE WAS NOT CLOSED";
-		case STACK_UNDERFLOW:			return "STACK ERROR - 'ZERO' STACK";
+		case STACK_UNDERFLOW:			return "STACK ERROR - STACK UNDERFLOW";
 		case STACK_EMPTY_ERROR:			return "STACK ERROR - STACK IS EMPTY";
+		case STACK_LEFT_CANARY_ERROR:	return "STACK ERROR - LEFT STACK CANARY IS WRONG";
+		case STACK_RIGHT_CANARY_ERROR:	return "STACK ERROR - RIGHT STACK CANARY IS WRONG";
+		case DATA_LEFT_CANARY_ERROR:	return "STACK ERROR - LEFT DATA CANARY IS WRONG";
 		default:			 			return "UNDEFINED ERROR";
 	}
 }
@@ -18,6 +23,8 @@ const char* StackErrorsMessenger(StackStatusCode status) {
 StackStatusCode DirCtor(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
+
+	STACK_VERIFY(stk);
 
 	status = MakeDirsPaths(stk);
 	STACK_ERROR_CHECK(status, stk);
@@ -35,6 +42,8 @@ StackStatusCode MakeDirsPaths(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
+	STACK_VERIFY(stk);
+
 	status = StrConcatenation(stk->log.dir_name, stk->log.styles.c_dir_name, &stk->log.styles.c_dir_path, stk);
 	STACK_ERROR_CHECK(status, stk);
 
@@ -44,6 +53,8 @@ StackStatusCode MakeDirsPaths(Stack_t* stk) {
 StackStatusCode MakeFilesPaths(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
+
+	STACK_VERIFY(stk);
 
 	for (size_t i = 0; i < stk->log.cnt_files; i++) {
 		status = StrConcatenation(stk->log.dir_name, stk->log.files[i].file_name, &stk->log.files[i].file_path, stk);
@@ -62,6 +73,28 @@ StackStatusCode MakeDirsFolders(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
+	STACK_VERIFY(stk);
+
+	DIR* log_dir = opendir(stk->log.dir_name);
+	if (log_dir) {
+		closedir(log_dir);
+
+		char* delete_folder = NULL;
+		status = StrConcatenation("rm -rf ", stk->log.dir_name, &delete_folder, stk);
+		STACK_ERROR_CHECK(status, stk);
+
+		system(delete_folder);
+		if (delete_folder) {
+			free(delete_folder);
+			delete_folder = NULL;
+		}
+
+#ifdef N_DEBUG
+		printf("\n" GREEN("LOG DIRECTORY WAS REMOVED SUCCESSFULLY!") "\n\n");
+#endif
+
+	}
+
 	const char* folders[] = { stk->log.dir_name,
 							  stk->log.styles.c_dir_path };
 
@@ -79,8 +112,10 @@ StackStatusCode MakeDirsFolders(Stack_t* stk) {
 		}
 
 		system(make_folder);
-		if (make_folder)
+		if (make_folder) {
 			free(make_folder);
+			make_folder = NULL;
+		}
 	}
 
 	return STACK_NO_ERROR;
@@ -89,6 +124,8 @@ StackStatusCode MakeDirsFolders(Stack_t* stk) {
 StackStatusCode HtmlLogStarter(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
+
+	STACK_VERIFY(stk);
 
 	for (size_t i = 0; i < stk->log.cnt_files; i++) {
 
@@ -107,8 +144,10 @@ StackStatusCode HtmlLogStarter(Stack_t* stk) {
 		STACK_ERROR_CHECK(status, stk);
 
 		fprintf(log_file, "\t\t<link rel='stylesheet' href='%s'>\n", include_style);
-		if (include_style)
+		if (include_style) {
 			free(include_style);
+			include_style = NULL;
+		}
 
 		fprintf(log_file, "\t</head>\n");
 
@@ -117,8 +156,8 @@ StackStatusCode HtmlLogStarter(Stack_t* stk) {
 
 		fprintf(log_file, "\t<body>\n");
 		fprintf(log_file, "\t\t<h1 align='center' name='top'><tt>MEGA DUMP</tt></h1>\n");
-		fprintf(log_file, "\t\t<p><a href='#down' class='anchor'><button class='btn'><tt>Down</tt></button></a></p><br>\n");
-		fprintf(log_file, "\t\t<p><a href='%s' class='anchor'><button class='btn'><tt>%s</tt></button></a></p><br>\n",
+		fprintf(log_file, "\t\t<p><a href='#down' class='anchor'><button class='btn'><tt>Down</tt></button></a>\n");
+		fprintf(log_file, "\t\t<a href='%s' class='anchor'><button class='btn'><tt>%s</tt></button></a></p><br>\n",
 				stk->log.files[(i + 1) % (stk->log.cnt_files)].file_name, stk->log.files[(i + 1) % (stk->log.cnt_files)].file_name);
 
 #ifdef HTML_DUMP
@@ -137,6 +176,10 @@ StackStatusCode HtmlLogStarter(Stack_t* stk) {
 }
 
 StackStatusCode CssLogStarter(Stack_t* stk) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	STACK_VERIFY(stk);
 
 	FILE* styles_file = fopen(stk->log.styles.files[CSS].file_path, "w");
 	if (!styles_file)
@@ -188,6 +231,10 @@ StackStatusCode CssLogStarter(Stack_t* stk) {
 }
 
 StackStatusCode HtmlTableLog(Stack_t* stk) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	STACK_VERIFY(stk);
 
 	FILE* table_file = fopen(stk->log.files[TABLE].file_path, "a");
 	if (!table_file)
@@ -254,20 +301,62 @@ StackStatusCode RunMainHtmlFile(Stack_t* stk) {
 	STACK_ERROR_CHECK(status, stk);
 
 	system(open_log_file);
-	if (open_log_file)
+	if (open_log_file) {
 		free(open_log_file);
+		open_log_file = NULL;
+	}
 
 	return STACK_NO_ERROR;
 }
 
-StackStatusCode DoStackDumpMain(Stack_t* stk) {
+StackStatusCode DoStackDumpMain(Stack_t* stk, DumpInfo dump_info) {
 
+	StackStatusCode status = STACK_NO_ERROR;
 
+	STACK_VERIFY(stk);
+
+	FILE* main_file = fopen(stk->log.files[MAIN].file_path, "a");
+	if (!main_file)
+		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
+
+	fprintf(main_file, "\t\t<p><tt>called from %s: %zu (after %s)</tt></p>\n\t\t<tt><pre>\t{</pre></tt>\n",
+			dump_info.file, dump_info.line, dump_info.func);
+
+#ifdef CANARY_PROTECTION
+	fprintf(main_file, "\t\t<p><tt><pre>\t\tstack canary1 = 0x%X</pre></tt></p>\n", (int)stk->canary1);
+#endif
+
+	fprintf(main_file, "\t\t<p><tt><pre>\t\tcapacity = %zu</pre></tt></p>\n", stk->capacity);
+	fprintf(main_file, "\t\t<p><tt><pre>\t\tsize = %zu</pre></tt></p>\n", stk->size);
+
+#ifdef CANARY_PROTECTION
+	fprintf(main_file, "\t\t<p><tt><pre>\t\tdata canary1 [%p] = 0x%X</pre></tt></p>\n", (Canary_t*)((char*)stk->data - sizeof(Canary_t)),
+																				(int)(*(Canary_t*)((char*)stk->data - sizeof(Canary_t))));
+#endif
+
+	fprintf(main_file, "\t\t<p><tt><pre>\t\tdata [%p]:</pre></tt></p>\n\t\t<tt><pre>\t\t\t{</pre></tt>\n", stk->data);
+	for (size_t i = 0; i < stk->capacity; i++)
+		(i < stk->size) ? fprintf(main_file, "\t\t<p><tt><pre>\t\t\t\t*[%zu] = %lg</pre></tt></p>\n", i, *(stk->data + i)) :
+						  fprintf(main_file, "\t\t<p><tt><pre>\t\t\t\t [%zu] = %lg (POISON)</pre></tt></p>\n", i, *(stk->data + i));
+	fprintf(main_file, "\t\t<tt><pre>\t\t\t}</pre></tt>\n");
+
+#ifdef CANARY_PROTECTION
+	fprintf(main_file, "\t\t<p><tt><pre>\t\tstack canary2 = 0x%X</pre></tt></p>\n", (int)stk->canary2);
+#endif
+
+	fprintf(main_file, "\t\t<tt><pre>\t}</pre></tt>\n");
+
+	if (fclose(main_file))
+		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
 
 	return STACK_NO_ERROR;
 }
 
 StackStatusCode DoStackDumpTable(Stack_t* stk) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	STACK_VERIFY(stk);
 
 	static size_t number = 1;
 
@@ -282,7 +371,7 @@ StackStatusCode DoStackDumpTable(Stack_t* stk) {
 
 	fprintf(table_file, "\t\t\t\t<td class = 'stack_data'><tt>");
 	for (size_t i = 0; i < stk->size; i++)
-		fprintf(table_file, "%d ", *(stk->data + i));
+		fprintf(table_file, "%lg ", *(stk->data + i));
 	fprintf(table_file, "</tt></td>\n");
 
 	fprintf(table_file, "\t\t\t\t<td class = 'stack_capacity'><tt>%zu</tt></td>\n", stk->capacity);
@@ -325,4 +414,20 @@ StackStatusCode StrConcatenation(const char* string1, const char* string2, char*
 	*(*str_out + i) = '\0';
 
 	return STACK_NO_ERROR;
+}
+
+StackStatusCode StackMemset(Stack_t* stk, const size_t start, const size_t cnt, const Stack_elem_t value) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	STACK_VERIFY(stk);
+
+	for (size_t i = 0; i < cnt; i++)
+		*(stk->data + start + i) = value;
+
+	return STACK_NO_ERROR;
+};
+
+int CompareDouble(const double var1, const double var2) {
+	return (abs(var1 - var2) <= EPS);
 }

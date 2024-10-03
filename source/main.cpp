@@ -6,7 +6,9 @@
 //									  5) stack dtor, 6) stack verify, 7) Stack status code
 //	I) HexSpeak
 //	II) PROTECTION -> 1) Canary protection + 2) Hash protection
-//	II) DUMP from DED (with conditional compilation in stack struct prototype)
+//	II) DUMP from DED with colors
+//	III) Bit move in errors
+//	IV)	STACK UNDERFLOW
 
 int main() {
 
@@ -14,13 +16,14 @@ int main() {
 
 	INIT_STACK(stk);
 
-	STACK_CTOR(&stk, 10);
+	STACK_CTOR(&stk, 1);
 
-	for (Stack_elem_t i = 0; i < 1000; i++)
+	for (Stack_elem_t i = 0; i < 20; i++)
 		STACK_PUSH(&stk, i);
 
 	Stack_elem_t x = 0;
-	STACK_POP(&stk, &x);
+	for (Stack_elem_t i = 0; i < 20; i++)
+		STACK_POP(&stk, &x);
 
 	STACK_DTOR(&stk);
 
