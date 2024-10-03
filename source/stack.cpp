@@ -4,6 +4,9 @@ StackStatusCode DoStackCtor(Stack_t* stk, size_t capacity) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
+	if (!stk)
+		STACK_ERROR_CHECK(STACK_POINTER_ERROR, stk);
+
 #ifdef CANARY_PROTECTION
 	stk->canary1 = STACK_CANARY_HEX;
 	stk->canary2 = STACK_CANARY_HEX;
@@ -22,11 +25,12 @@ StackStatusCode DoStackCtor(Stack_t* stk, size_t capacity) {
 
 	StackMemset(stk, 0, stk->capacity, POISON);
 #else
-	if (stk->capacity)
+	if (stk->capacity != 0) {
 		stk->data = (Stack_elem_t*)calloc(stk->capacity, sizeof(Stack_elem_t));
 		if (!stk->data)
 			STACK_ERROR_CHECK(STACK_ALLOC_ERROR, stk);
 		StackMemset(stk, 0, stk->capacity, POISON);
+	}
 #endif
 
 	stk->size = 0;
@@ -50,7 +54,7 @@ StackStatusCode DoStackPush(Stack_t* stk, Stack_elem_t value) {
 
 	STACK_VERIFY(stk);
 
-	if (stk->size - 1 == stk->capacity) {
+	if (stk->size == stk->capacity) {
 #ifdef CANARY_PROTECTION
 		size_t size = (stk->capacity *= 2) * sizeof(Stack_elem_t) + 2 * sizeof(Canary_t);
 		stk->data = (Stack_elem_t*)((char*)realloc((char*)stk->data - sizeof(Canary_t), size + (ALIGNMENT - size % ALIGNMENT)) + sizeof(Canary_t));
@@ -80,7 +84,7 @@ StackStatusCode DoStackPop(Stack_t* stk, Stack_elem_t* value) {
 
 	STACK_VERIFY(stk);
 
-	if ((4 * stk->size < stk->capacity && stk->size > DEFAULT_CAPACITY) || (stk->size < DEFAULT_CAPACITY && stk->capacity > DEFAULT_CAPACITY)) {
+	if ((4 * stk->size < stk->capacity && stk->size > DEFAULT_CAPACITY) || (stk->size <= DEFAULT_CAPACITY && stk->capacity > DEFAULT_CAPACITY)) {
 #ifdef CANARY_PROTECTION
 		size_t size = (stk->capacity = (stk->size < DEFAULT_CAPACITY ? DEFAULT_CAPACITY : stk->size)) * sizeof(Stack_elem_t) + 2 * sizeof(Canary_t);
 		stk->data = (Stack_elem_t*)((char*)realloc((char*)stk->data - sizeof(Canary_t), size + (ALIGNMENT - size % ALIGNMENT)) + sizeof(Canary_t));
@@ -96,7 +100,7 @@ StackStatusCode DoStackPop(Stack_t* stk, Stack_elem_t* value) {
 	STACK_VERIFY(stk);
 
 	if (stk->size == 0)
-		STACK_ERROR_CHECK(STACK_SIZE_ERROR, stk);
+		STACK_ERROR_CHECK(STACK_POP_ERROR, stk);
 
 	*value = *(stk->data + (--stk->size));
 	*(stk->data + stk->size) = POISON;
@@ -123,6 +127,9 @@ StackStatusCode DoStackVerify(Stack_t* stk) {
 
 	if (!CompareDouble(*(Canary_t*)((char*)stk->data - sizeof(Canary_t)), DATA_CANARY_HEX))
 		return DATA_LEFT_CANARY_ERROR;
+
+	if (!CompareDouble(*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)), DATA_CANARY_HEX))
+		return DATA_RIGHT_CANARY_ERROR;
 #endif
 
 	if (!stk->data)
@@ -142,6 +149,9 @@ StackStatusCode DoStackVerify(Stack_t* stk) {
 
 StackStatusCode DoStackDtor(Stack_t* stk) {
 
+	if (!stk)
+		STACK_ERROR_CHECK(STACK_POINTER_ERROR, stk);
+
 #ifdef CANARY_PROTECTION
 	stk->canary1 = TRASH;
 	stk->canary2 = TRASH;
@@ -150,20 +160,23 @@ StackStatusCode DoStackDtor(Stack_t* stk) {
 	stk->capacity = TRASH;
 	stk->size 	  = TRASH;
 
+	if (!stk->data)
+		STACK_ERROR_CHECK(STACK_DATA_POINTER_ERROR, stk);
+
+	char* alloc_memory = NULL;
+
 #ifdef CANARY_PROTECTION
-	char* alloc_memory = ((char*)stk->data - sizeof(Canary_t));
+	alloc_memory = ((char*)stk->data - sizeof(Canary_t));
 #else
-	char* alloc_memory = (char*)stk->data;
+	alloc_memory = (char*)stk->data;
 #endif
 
-	if (alloc_memory) {
-		free(alloc_memory);
-		alloc_memory = NULL;
+	free(alloc_memory);
+	alloc_memory = NULL;
 
 #ifdef N_DEBUG
-		printf("\n" GREEN("ALLOCATED MEMORY FREED!") "\n\n");
+	printf("\n" GREEN("ALLOCATED MEMORY FREED!") "\n\n");
 #endif
-	}
 
 #ifdef HTML_DUMP
 	StackStatusCode status = STACK_NO_ERROR;

@@ -8,7 +8,8 @@
 //	II) PROTECTION -> 1) Canary protection + 2) Hash protection
 //	II) DUMP from DED with colors
 //	III) Bit move in errors
-//	IV)	STACK UNDERFLOW
+//	IV)	STACK UNDERFLOW conception
+//	V) Canaries for LOG and STACK INFO
 
 int main() {
 
@@ -17,6 +18,8 @@ int main() {
 	INIT_STACK(stk);
 
 	STACK_CTOR(&stk, 1);
+
+	*(Canary_t*)((char*)stk.data + stk.capacity * sizeof(Stack_elem_t)) = 0;
 
 	for (Stack_elem_t i = 0; i < 20; i++)
 		STACK_PUSH(&stk, i);

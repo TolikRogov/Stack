@@ -12,10 +12,11 @@ const char* StackErrorsMessenger(StackStatusCode status) {
 		case STACK_DATA_POINTER_ERROR:	return "STACK ERROR - STACK DATA POINTER IS NULL";
 		case STACK_FILE_CLOSE_ERROR:	return "STACK ERROR - FILE WAS NOT CLOSED";
 		case STACK_UNDERFLOW:			return "STACK ERROR - STACK UNDERFLOW";
-		case STACK_EMPTY_ERROR:			return "STACK ERROR - STACK IS EMPTY";
+		case STACK_POP_ERROR:			return "STACK ERROR - NOTHING TO POP FROM STACK";
 		case STACK_LEFT_CANARY_ERROR:	return "STACK ERROR - LEFT STACK CANARY IS WRONG";
 		case STACK_RIGHT_CANARY_ERROR:	return "STACK ERROR - RIGHT STACK CANARY IS WRONG";
 		case DATA_LEFT_CANARY_ERROR:	return "STACK ERROR - LEFT DATA CANARY IS WRONG";
+		case DATA_RIGHT_CANARY_ERROR:	return "STACK ERROR - RIGHT DATA CANARY IS WRONG";
 		default:			 			return "UNDEFINED ERROR";
 	}
 }
@@ -30,6 +31,9 @@ StackStatusCode DirCtor(Stack_t* stk) {
 	STACK_ERROR_CHECK(status, stk);
 
 	status = MakeFilesPaths(stk);
+	STACK_ERROR_CHECK(status, stk);
+
+	status = DeleteLogDir(stk);
 	STACK_ERROR_CHECK(status, stk);
 
 	status = MakeDirsFolders(stk);
@@ -75,26 +79,6 @@ StackStatusCode MakeDirsFolders(Stack_t* stk) {
 
 	STACK_VERIFY(stk);
 
-	DIR* log_dir = opendir(stk->log.dir_name);
-	if (log_dir) {
-		closedir(log_dir);
-
-		char* delete_folder = NULL;
-		status = StrConcatenation("rm -rf ", stk->log.dir_name, &delete_folder, stk);
-		STACK_ERROR_CHECK(status, stk);
-
-		system(delete_folder);
-		if (delete_folder) {
-			free(delete_folder);
-			delete_folder = NULL;
-		}
-
-#ifdef N_DEBUG
-		printf("\n" GREEN("LOG DIRECTORY WAS REMOVED SUCCESSFULLY!") "\n\n");
-#endif
-
-	}
-
 	const char* folders[] = { stk->log.dir_name,
 							  stk->log.styles.c_dir_path };
 
@@ -116,6 +100,39 @@ StackStatusCode MakeDirsFolders(Stack_t* stk) {
 			free(make_folder);
 			make_folder = NULL;
 		}
+	}
+
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode DeleteLogDir(Stack_t* stk) {
+
+	StackStatusCode status = STACK_NO_ERROR;
+
+	DIR* log_dir = opendir(stk->log.dir_name);
+	if (log_dir) {
+		closedir(log_dir);
+
+		char* delete_folder = NULL;
+		status = StrConcatenation("rm -rf ", stk->log.dir_name, &delete_folder, stk);
+		STACK_ERROR_CHECK(status, stk);
+
+		system(delete_folder);
+		if (delete_folder) {
+			free(delete_folder);
+			delete_folder = NULL;
+		}
+
+#ifdef N_DEBUG
+		log_dir = opendir(stk->log.dir_name);
+		if (log_dir) {
+			closedir(log_dir);
+			printf("\n" RED("LOG DIR WAS NOT REMOVED\n") "\n\n");
+		}
+		else
+			printf("\n" GREEN("LOG DIRECTORY WAS REMOVED SUCCESSFULLY!") "\n\n");
+#endif
+
 	}
 
 	return STACK_NO_ERROR;
@@ -341,6 +358,10 @@ StackStatusCode DoStackDumpMain(Stack_t* stk, DumpInfo dump_info) {
 	fprintf(main_file, "\t\t<tt><pre>\t\t\t}</pre></tt>\n");
 
 #ifdef CANARY_PROTECTION
+	fprintf(main_file, "\t\t<p><tt><pre>\t\tdata canary2 [%p] = 0x%X</pre></tt></p>\n",
+			(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)),
+			(int)(*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t))));
+
 	fprintf(main_file, "\t\t<p><tt><pre>\t\tstack canary2 = 0x%X</pre></tt></p>\n", (int)stk->canary2);
 #endif
 

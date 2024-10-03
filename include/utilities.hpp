@@ -63,10 +63,12 @@ struct Dir {
 #define DUMP(stk, func)
 #endif
 
-#define STACK_CTOR(stk, capacity) {			 \
-	status = DoStackCtor(stk, capacity);	\
-	STACK_ERROR_CHECK(status, stk);			\
-	DUMP(stk, "STACK_CTOR");				\
+#define STACK_CTOR(stk, capacity) {					 \
+	if (capacity < 0)								\
+		STACK_ERROR_CHECK(STACK_SIZE_ERROR, stk);	\
+	status = DoStackCtor(stk, capacity);			\
+	STACK_ERROR_CHECK(status, stk);					\
+	DUMP(stk, "STACK_CTOR");						\
 }
 
 #define STACK_PUSH(stk, value) {		 	 \
@@ -119,6 +121,7 @@ StackStatusCode DirCtor(Stack_t* stk);
 StackStatusCode MakeDirsPaths(Stack_t* stk);
 StackStatusCode MakeFilesPaths(Stack_t* stk);
 StackStatusCode MakeDirsFolders(Stack_t* stk);
+StackStatusCode DeleteLogDir(Stack_t* stk);
 
 StackStatusCode HtmlLogStarter(Stack_t* stk);
 StackStatusCode CssLogStarter(Stack_t* stk);
