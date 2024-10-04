@@ -55,11 +55,11 @@ struct Dir {
 }
 
 #ifdef HTML_DUMP
-#define DUMP(stk, func_name) {				 	  		 										 \
-	status = DoStackDumpMain(stk, {.file = __FILE__, .line = __LINE__, .func = func_name});	 	 \
-	STACK_ERROR_CHECK(status, stk);																\
-	status = DoStackDumpTable(stk);																\
-	STACK_ERROR_CHECK(status, stk);																\
+#define DUMP(stk, func_name) {				 	  		 										 				 \
+	status = DoStackDumpMain(stk, {.file = __FILE__, .line = __LINE__, .func = func_name});	 			 		 \
+	STACK_ERROR_CHECK(status, stk);																				\
+	status = DoStackDumpTable(stk);																				\
+	STACK_ERROR_CHECK(status, stk);																				\
 }
 #else
 #define DUMP(stk, func)

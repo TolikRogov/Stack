@@ -366,6 +366,11 @@ StackStatusCode DoStackDumpMain(Stack_t* stk, DumpInfo dump_info) {
 	fprintf(main_file, "\t\t<p><tt><pre>\t\tsize = %zu</pre></tt></p>\n", stk->size);
 
 	if (stk->data) {
+
+#ifdef HASH_PROTECTION
+		fprintf(main_file, "\t\t<p><tt><pre>\t\tdata hash = %zu</pre></tt></p>\n", stk->data_hash);
+#endif
+
 #ifdef CANARY_PROTECTION
 		fprintf(main_file, "\t\t<p><tt><pre>\t\tdata canary1 [%p] = 0x%X</pre></tt></p>\n", (Canary_t*)((char*)stk->data - sizeof(Canary_t)),
 																					(int)(*(Canary_t*)((char*)stk->data - sizeof(Canary_t))));

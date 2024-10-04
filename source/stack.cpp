@@ -32,7 +32,7 @@ StackStatusCode DoStackCtor(Stack_t* stk, size_t capacity) {
 	*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)) = DATA_CANARY_HEX;
 
 #ifdef HASH_PROTECTION
-	stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+	DoStackHash(stk);
 #endif
 
 	status = StackMemset(stk, 0, stk->capacity, POISON);
@@ -44,7 +44,7 @@ StackStatusCode DoStackCtor(Stack_t* stk, size_t capacity) {
 			STACK_ERROR_CHECK(STACK_ALLOC_ERROR, stk);
 
 #ifdef HASH_PROTECTION
-		stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+		DoStackHash(stk);
 #endif
 
 		status = StackMemset(stk, 0, stk->capacity, POISON);
@@ -55,7 +55,7 @@ StackStatusCode DoStackCtor(Stack_t* stk, size_t capacity) {
 	stk->size = 0;
 
 #ifdef HASH_PROTECTION
-	stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+	DoStackHash(stk);
 #endif
 
 	STACK_VERIFY(stk);
@@ -78,18 +78,19 @@ StackStatusCode DoStackPush(Stack_t* stk, Stack_elem_t value) {
 #else
 		stk->data = (Stack_elem_t*)realloc(stk->data, (stk->capacity *= 2) * sizeof(Stack_elem_t));
 #endif
+
 		if (!stk->data)
 			STACK_ERROR_CHECK(STACK_ALLOC_ERROR, stk);
 
 #ifdef HASH_PROTECTION
-		stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+		DoStackHash(stk);
 #endif
 
 		status = StackMemset(stk, stk->size, stk->capacity - stk->size, POISON);
 		STACK_ERROR_CHECK(status, stk);
 
 #ifdef HASH_PROTECTION
-		stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+		DoStackHash(stk);
 #endif
 	}
 
@@ -98,7 +99,7 @@ StackStatusCode DoStackPush(Stack_t* stk, Stack_elem_t value) {
 	*(stk->data + stk->size++) = value;
 
 #ifdef HASH_PROTECTION
-	stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+		DoStackHash(stk);
 #endif
 
 	STACK_VERIFY(stk);
@@ -125,7 +126,7 @@ StackStatusCode DoStackPop(Stack_t* stk, Stack_elem_t* value) {
 			STACK_ERROR_CHECK(STACK_ALLOC_ERROR, stk);
 
 #ifdef HASH_PROTECTION
-		stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+		DoStackHash(stk);
 #endif
 	}
 
@@ -138,7 +139,7 @@ StackStatusCode DoStackPop(Stack_t* stk, Stack_elem_t* value) {
 	*(stk->data + stk->size) = POISON;
 
 #ifdef HASH_PROTECTION
-	stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+		DoStackHash(stk);
 #endif
 
 	STACK_VERIFY(stk);
@@ -192,7 +193,7 @@ StackStatusCode DoStackVerify(Stack_t* stk) {
 			return STACK_ERROR;
 
 #ifdef HASH_PROTECTION
-	stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+		DoStackHash(stk);
 #endif
 
 	return STACK_NO_ERROR;
@@ -258,7 +259,6 @@ StackStatusCode DoStackDtor(Stack_t* stk) {
 	return STACK_NO_ERROR;
 }
 
-#ifdef HASH_PROTECTION
 Hash_t DJB2Hash(const void* array, const size_t size_in_bytes) {
 
 	Hash_t hash = 5381;
@@ -268,4 +268,16 @@ Hash_t DJB2Hash(const void* array, const size_t size_in_bytes) {
 
 	return hash;
 }
+
+StackStatusCode DoStackHash(Stack_t* stk) {
+
+#ifdef CANARY_PROTECTION
+	size_t size = stk->capacity * sizeof(Stack_elem_t) + 2 * sizeof(Canary_t);
+	stk->data_hash = DJB2Hash((char*)stk->data - sizeof(Canary_t), size + (ALIGNMENT - size % ALIGNMENT));
+#else
+	stk->data_hash = DJB2Hash(stk->data, stk->capacity * sizeof(Stack_elem_t));
 #endif
+	stk->hash = DJB2Hash(stk, sizeof(Stack_t));
+
+	return STACK_NO_ERROR;
+}

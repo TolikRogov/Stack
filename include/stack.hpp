@@ -2,14 +2,9 @@
 #define STACK_INCLUDE
 
 typedef double Stack_elem_t;
+typedef double Canary_t;
+typedef size_t Hash_t;
 
-#ifdef CANARY_PROTECTION
-	typedef double Canary_t;
-#endif
-
-#ifdef HASH_PROTECTION
-	typedef size_t Hash_t;
-#endif
 
 enum StackStatusCode {
 	STACK_NO_ERROR,
@@ -90,8 +85,7 @@ StackStatusCode DoStackDtor(Stack_t* stk);
 
 StackStatusCode CheckerStackStatus(Stack_t* stk, const char* file, const char* func, const size_t line);
 
-#ifdef HASH_PROTECTION
-	Hash_t DJB2Hash(const void* array, const size_t size_in_bytes);
-#endif
+Hash_t DJB2Hash(const void* array, const size_t size_in_bytes);
+StackStatusCode DoStackHash(Stack_t* stk);
 
 #endif //STACK_INCLUDE
