@@ -2,7 +2,21 @@
 #define LOG_INCLUDE
 
 #include "stack.hpp"
-#include "log_utilities.hpp"
+
+enum HTML {
+	MAIN,
+	TABLE
+};
+
+enum STYLES {
+	CSS
+};
+
+struct DumpInfo {
+	const char* file;
+	const size_t line;
+	const char* func;
+};
 
 StackStatusCode HtmlLogStarter(Stack_t* stk);
 
