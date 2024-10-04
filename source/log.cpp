@@ -170,8 +170,9 @@ StackStatusCode FilesCtor(Stack_t* stk) {
 		fprintf(log_file, "\t\t</p><br>\n");
 
 #ifdef HTML_DUMP
-		fprintf(log_file, "\t\t<h2><p class = 'stack_info'><tt>Stack_t[<span class='stack_address'>%p</span>] "
-						 "born at <span class='stack_file_name'>%s</span>:<span class='stack_line'>%zu</span>, "
+		fprintf(log_file, "\t\t<h2 style='text-decoration: underline'><p class = 'stack_info'>"
+						 "<tt>Stack_t[<span class='address'>%p</span>] "
+						 "born at <span class='stack_file_name'>%s</span>: <span class='stack_line'>%zu</span>, "
 						 "name '<span class='stack_name'>%s</span>'</tt></p></h2>\n",
 						 stk, stk->stack_info.file_name, stk->stack_info.line, stk->stack_info.stack_name);
 #endif
@@ -198,11 +199,34 @@ StackStatusCode CssLogStarter(Stack_t* stk) {
 	fprintf(styles_file, ".anchor:visited { \n\tcolor: #fff; \n}\n\n");
 	fprintf(styles_file, ".anchor:focused { \n\tborder-bottom: 1px solid; \n\tbackground: #bae498; \n}\n\n");
 
+	fprintf(styles_file, ".main_dump { \n\tbackground-color: #F7F7F7; \n\tpadding: 12px 30px;"
+						"\n\t border-radius: 20px; \n\tmargin: 20px 100px; \n}\n\n");
 	fprintf(styles_file, ".stack_info { \n\ttext-align: center; \n}\n\n");
-	fprintf(styles_file, ".stack_address { \n\tcolor: #4B0082; \n}\n\n");
-	fprintf(styles_file, ".stack_file_name { \n\tcolor: #FFA500; \n}\n\n");
-	fprintf(styles_file, ".stack_line { \n\tcolor: #20B2AA; \n}\n\n");
-	fprintf(styles_file, ".stack_name { \n\tcolor: #7B68EE; \n}\n\n");
+	fprintf(styles_file, ".address { \n\ttext-align: center; \n\tcolor: #4B0082; \n}\n\n");
+	fprintf(styles_file, ".stack_file_name { \n\ttext-align: center; \n\tcolor: #FFA500; \n}\n\n");
+	fprintf(styles_file, ".stack_line { \n\ttext-align: center; \n\tcolor: #20B2AA; \n}\n\n");
+	fprintf(styles_file, ".stack_name { \n\ttext-align: center; \n\tcolor: #7B68EE; \n}\n\n");
+	fprintf(styles_file, ".stack_function { \n\ttext-align: center; \n\tcolor: #8B008B; \n}\n\n");
+	fprintf(styles_file, ".main_dump_number { \n\ttext-align: center; \n\tcolor: #BDB76B; \n}\n\n");
+	fprintf(styles_file, ".poison { \n\ttext-align: center; \n\tcolor: #006400; \n}\n\n");
+	fprintf(styles_file, ".poison_value { \n\ttext-align: center; \n\tcolor: #FF0000; \n}\n\n");
+	fprintf(styles_file, ".hex_speak { \n\ttext-align: center; \n\tcolor: #9400D3; \n}\n\n");
+	fprintf(styles_file, ".hash { \n\ttext-align: center; \n\tcolor: #1E90FF; \n}\n\n");
+	fprintf(styles_file, ".value { \n\ttext-align: center; \n\tcolor: #0000FF; \n}\n\n");
+	fprintf(styles_file, ".parameter { \n\ttext-align: center; \n\tcolor: #8B4513; \n}\n\n");
+
+	fprintf(styles_file, ".tb_stk { \n\twidth: 90%%; \n\tborder: 15px solid #F2F8F8; \
+			\n\tborder-collapse: collapse; \n\tmargin: auto; \
+			\n\ttable-layout: auto; \n\tmargin-bottom: 20px; \
+			\n\tborder-top: 5px solid #F2F8F8; \n}\n\n");
+	fprintf(styles_file, ".tb_stk th { \n\tfont-weight: bold; \n\tpadding: 5px;"
+			"\n\tbackground: #F2F8F8; \n\tborder: none;"
+			"\n\tborder-bottom: 5px solid #F2F8F8; \n}\n\n");
+	fprintf(styles_file, ".tb_stk td { \n\tpadding: 10px; \n\tborder: none; \
+			\n\tborder-bottom: 5px solid #F2F8F8; \n}\n\n");
+	fprintf(styles_file, ".table_header > td { \n\ttext-align: center; \n}\n\n");
+	fprintf(styles_file, ".tb_stk tbody tr:nth-child(odd) { \n\tbackground: #fff; \n}\n\n");
+	fprintf(styles_file, ".tb_stk tbody tr:nth-child(even) { \n\tbackground: #F7F7F7; \n}\n\n");
 
 	fprintf(styles_file, ".table_header > td > h3{ \n\tpadding: 10px 20px; \n}\n\n");
 	fprintf(styles_file, ".stack_dump_number { \n\tcolor: turquoise; \n\ttext-align: center; \n}\n\n");
@@ -211,19 +235,6 @@ StackStatusCode CssLogStarter(Stack_t* stk) {
 	fprintf(styles_file, ".stack_data { \n\tcolor: green; \n\ttext-align: left; \n}\n\n");
 	fprintf(styles_file, ".stack_capacity { \n\tcolor: blue; \n\ttext-align: center; \n}\n\n");
 	fprintf(styles_file, ".stack_size { \n\tcolor: violet; \n\ttext-align: center; \n}\n\n");
-
-	fprintf(styles_file, ".tb_stk { \n\twidth: 90%%; \n\tborder: 15px solid #F2F8F8; \
-			\n\tborder-collapse: collapse; \n\tmargin: auto; \
-			\n\ttable-layout: auto; \n\tmargin-bottom: 20px; \
-			\n\tborder-top: 5px solid #F2F8F8; \n}\n\n");
-	fprintf(styles_file, ".tb_stk th { \n\tfont-weight: bold; \n\tpadding: 5px; \
-			\n\tbackground: #F2F8F8; \n\tborder: none; \
-			\n\tborder-bottom: 5px solid #F2F8F8; \n}\n\n");
-	fprintf(styles_file, ".tb_stk td { \n\tpadding: 10px; \n\tborder: none; \
-			\n\tborder-bottom: 5px solid #F2F8F8; \n}\n\n");
-	fprintf(styles_file, ".table_header > td { \n\ttext-align: center; \n\t\t}\n\n");
-	fprintf(styles_file, ".tb_stk tbody tr:nth-child(odd) { \n\tbackground: #fff; \n\t\t}\n\n");
-	fprintf(styles_file, ".tb_stk tbody tr:nth-child(even) { \n\tbackground: #F7F7F7; \n}\n\n");
 
 	fprintf(styles_file, ".time { \n\tcolor: #4A235A; \n\tfont-size: 30px; \
 			\n\tmargin: center; \n}\n\n");
@@ -251,12 +262,36 @@ StackStatusCode HtmlTableLog(Stack_t* stk) {
 
 	fprintf(table_file, "\t\t<table class='tb_stk'>\n");
 	fprintf(table_file, "\t\t\t<tr class='table_header'>\n");
-	fprintf(table_file, "\t\t\t\t<td><tt><h3>Output number</tt></h3></td>\n");
-	fprintf(table_file, "\t\t\t\t<td><tt><h3>Stack pointer</tt></h3></td>\n");
-	fprintf(table_file, "\t\t\t\t<td><tt><h3>Stack data pointer</tt></h3></td>\n");
-	fprintf(table_file, "\t\t\t\t<td><tt><h3>Data</tt></h3></td>\n");
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>DUMP #</tt></h3></td>\n");
+
+#ifdef HASH_PROTECTION
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Stack hash</tt></h3></td>\n");
+#endif
+
+#ifdef CANARY_PROTECTION
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Stack canary1</tt></h3></td>\n");
+#endif
+
 	fprintf(table_file, "\t\t\t\t<td><tt><h3>Stack capacity</h3></tt></td>\n");
 	fprintf(table_file, "\t\t\t\t<td><tt><h3>Stack size</h3></tt></td>\n");
+
+#ifdef HASH_PROTECTION
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Data hash</tt></h3></td>\n");
+#endif
+
+#ifdef CANARY_PROTECTION
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Data canary1</tt></h3></td>\n");
+#endif
+
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Stack data pointer</tt></h3></td>\n");
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Data</tt></h3></td>\n");
+
+#ifdef CANARY_PROTECTION
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Data canary2</tt></h3></td>\n");
+
+	fprintf(table_file, "\t\t\t\t<td><tt><h3>Stack canary2</tt></h3></td>\n");
+#endif
+
 	fprintf(table_file, "\t\t\t</tr>\n");
 
 	if(fclose(table_file))
@@ -329,6 +364,8 @@ StackStatusCode RunMainHtmlFile(Stack_t* stk) {
 
 StackStatusCode DoStackDumpMain(Stack_t* stk, DumpInfo dump_info) {
 
+	static size_t number = 1;
+
 	if (!stk)
 		STACK_ERROR_CHECK(STACK_POINTER_ERROR, stk);
 
@@ -336,48 +373,69 @@ StackStatusCode DoStackDumpMain(Stack_t* stk, DumpInfo dump_info) {
 	if (!main_file)
 		STACK_ERROR_CHECK(STACK_FILE_OPEN_ERROR, stk);
 
-	fprintf(main_file, "\t\t<p><tt>called from %s: %zu (after %s)</tt></p>\n\t\t<tt><pre>\t{</pre></tt>\n",
-			dump_info.file, dump_info.line, dump_info.func);
+	fprintf(main_file, "\t\t<div class='main_dump'>\n");
+
+	fprintf(main_file, "\t\t\t<h3><p><tt>DUMP <span class='main_dump_number'>#%zu</span> called from <span class='stack_file_name'>%s</span>: "
+					  "<span class='stack_line'>%zu</span> (after <span class='stack_function'>%s</span>)"
+					  "</tt></p></h3>\n\t\t\t<tt><pre>\t{</pre></tt>\n",
+					  number++, dump_info.file, dump_info.line, dump_info.func);
 
 #ifdef HASH_PROTECTION
-	fprintf(main_file, "\t\t<p><tt><pre>\t\tstack hash = %llx</pre></tt></p>\n", stk->hash);
+	fprintf(main_file, "\t\t\t<p><tt><pre>\t\t<span class='parameter'>stack hash</span> = <span class='hash'>%llx</span></pre></tt></p>\n",
+					  stk->hash);
 #endif
 
 #ifdef CANARY_PROTECTION
-	fprintf(main_file, "\t\t<p><tt><pre>\t\tstack canary1 = 0x%X</pre></tt></p>\n", (int)stk->canary1);
+	fprintf(main_file, "\t\t\t<p><tt><pre>\t\t<span class='parameter'>stack canary1</span> = <span class='hex_speak'>0x%X</span></pre></tt></p>\n",
+					  (int)stk->canary1);
 #endif
 
-	fprintf(main_file, "\t\t<p><tt><pre>\t\tcapacity = %zu</pre></tt></p>\n", stk->capacity);
-	fprintf(main_file, "\t\t<p><tt><pre>\t\tsize = %zu</pre></tt></p>\n", stk->size);
+	fprintf(main_file, "\t\t\t<p><tt><pre>\t\t<span class='parameter'>capacity</span> = <span class='value'>%zu</span></pre></tt></p>\n",
+					  stk->capacity);
+	fprintf(main_file, "\t\t\t<p><tt><pre>\t\t<span class='parameter'>size</span> = <span class='value'>%zu</span></pre></tt></p>\n",
+					  stk->size);
 
 	if (stk->data) {
 
 #ifdef HASH_PROTECTION
-		fprintf(main_file, "\t\t<p><tt><pre>\t\tdata hash = %llx</pre></tt></p>\n", stk->data_hash);
+		fprintf(main_file, "\t\t\t<p><tt><pre>\t\t<span class='parameter'>data hash</span> = <span class='hash'>%llx</span></pre></tt></p>\n",
+						  stk->data_hash);
 #endif
 
 #ifdef CANARY_PROTECTION
-		fprintf(main_file, "\t\t<p><tt><pre>\t\tdata canary1 [%p] = 0x%X</pre></tt></p>\n", (Canary_t*)((char*)stk->data - sizeof(Canary_t)),
-																					(int)(*(Canary_t*)((char*)stk->data - sizeof(Canary_t))));
+		fprintf(main_file, "\t\t\t<p><tt><pre>\t\t<span class='parameter'>data canary1</span> [<span class='address'>%p</span>] = "
+						  "<span class='hex_speak'>0x%X</span></pre></tt></p>\n",
+						  (Canary_t*)((char*)stk->data - sizeof(Canary_t)),
+						  (int)(*(Canary_t*)((char*)stk->data - sizeof(Canary_t))));
 #endif
 
-		fprintf(main_file, "\t\t<p><tt><pre>\t\tdata [%p]:</pre></tt></p>\n\t\t<tt><pre>\t\t\t{</pre></tt>\n", stk->data);
+		fprintf(main_file, "\t\t\t<p><tt><pre>\t\t<span class='parameter'>data</span> [<span class='address'>%p</span>]:</pre></tt></p>\n"
+						  "\t\t\t<p><tt><pre>\t\t\t{</pre></tt></p>\n", stk->data);
 		for (size_t i = 0; i < stk->capacity; i++)
-			(i < stk->size) ? fprintf(main_file, "\t\t<p><tt><pre>\t\t\t\t*[%zu] = %lg</pre></tt></p>\n", i, *(stk->data + i)) :
-							fprintf(main_file, "\t\t<p><tt><pre>\t\t\t\t [%zu] = %lg (POISON)</pre></tt></p>\n", i, *(stk->data + i));
-		fprintf(main_file, "\t\t<tt><pre>\t\t\t}</pre></tt>\n");
+			(i < stk->size) ? fprintf(main_file, "\t\t\t<p><tt><pre>\t\t\t\t*<span class='parameter'>[%zu]</span> = "
+												"<span class='value'>%lg</span></pre></tt></p>\n",
+												i, *(stk->data + i)) :
+							  fprintf(main_file, "\t\t\t<p><tt><pre>\t\t\t\t <span class='parameter'>[%zu]</span> = "
+							  					"<span class='poison_value'>%lg</span> "
+							  					"<span class='poison'><b>(POISON)</b></span></pre></tt></p>\n",
+							  		  			i, *(stk->data + i));
+		fprintf(main_file, "\t\t\t<tt><pre>\t\t\t}</pre></tt>\n");
 	}
 
 #ifdef CANARY_PROTECTION
 	if (stk->data)
-		fprintf(main_file, "\t\t<p><tt><pre>\t\tdata canary2 [%p] = 0x%X</pre></tt></p>\n",
-				(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)),
-				(int)(*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t))));
+		fprintf(main_file, "\t\t\t<p><tt><pre>\t\t<span class='parameter'>data canary2</span> [<span class='address'>%p</span>] = "
+						  "<span class='hex_speak'>0x%X</span></pre></tt></p>\n",
+						  (Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)),
+						  (int)(*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t))));
 
-	fprintf(main_file, "\t\t<p><tt><pre>\t\tstack canary2 = 0x%X</pre></tt></p>\n", (int)stk->canary2);
+	fprintf(main_file, "\t\t\t<p><tt><pre>\t\t<span class='parameter'>stack canary2</span> = <span class='hex_speak'>0x%X</span></pre></tt></p>\n",
+					  (int)stk->canary2);
 #endif
 
-	fprintf(main_file, "\t\t<tt><pre>\t}</pre></tt>\n");
+	fprintf(main_file, "\t\t\t<tt><pre>\t}</pre></tt>\n");
+
+	fprintf(main_file, "\t\t</div>\n");
 
 	if (fclose(main_file))
 		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
@@ -399,7 +457,26 @@ StackStatusCode DoStackDumpTable(Stack_t* stk) {
 
 	fprintf(table_file, "\t\t\t<tr>\n");
 	fprintf(table_file, "\t\t\t\t<td class = 'stack_dump_number'><tt>%zu</tt></td>\n", number++);
-	fprintf(table_file, "\t\t\t\t<td class = 'stack_pointer'><tt>%p</tt></td>\n", stk);
+
+#ifdef HASH_PROTECTION
+	fprintf(table_file, "\t\t\t\t<td class = 'hash'><tt>%llx</tt></td>\n", stk->hash);
+#endif
+
+#ifdef CANARY_PROTECTION
+	fprintf(table_file, "\t\t\t\t<td class = 'hex_speak'><tt>%llX</tt></td>\n", stk->canary1);
+#endif
+
+	fprintf(table_file, "\t\t\t\t<td class = 'stack_capacity'><tt>%zu</tt></td>\n", stk->capacity);
+	fprintf(table_file, "\t\t\t\t<td class = 'stack_size'><tt>%zu</tt></td>\n", stk->size);
+
+#ifdef HASH_PROTECTION
+	fprintf(table_file, "\t\t\t\t<td class = 'hash'><tt>%llx</tt></td>\n", stk->data_hash);
+#endif
+
+#ifdef CANARY_PROTECTION
+	fprintf(table_file, "\t\t\t\t<td class = 'hex_speak'><tt>%X</tt></td>\n", (int)(*(Canary_t*)((char*)stk->data - sizeof(Canary_t))));
+#endif
+
 	fprintf(table_file, "\t\t\t\t<td class = 'stack_data_pointer'><tt>%p</tt></td>\n", stk->data);
 
 	fprintf(table_file, "\t\t\t\t<td class = 'stack_data'><tt>");
@@ -407,8 +484,13 @@ StackStatusCode DoStackDumpTable(Stack_t* stk) {
 		fprintf(table_file, "%lg ", *(stk->data + i));
 	fprintf(table_file, "</tt></td>\n");
 
-	fprintf(table_file, "\t\t\t\t<td class = 'stack_capacity'><tt>%zu</tt></td>\n", stk->capacity);
-	fprintf(table_file, "\t\t\t\t<td class = 'stack_size'><tt>%zu</tt></td>\n", stk->size);
+#ifdef CANARY_PROTECTION
+	fprintf(table_file, "\t\t\t\t<td class = 'hex_speak'><tt>%X</tt></td>\n",
+			(int)(*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t))));
+
+	fprintf(table_file, "\t\t\t\t<td class = 'hex_speak'><tt>%llX</tt></td>\n", stk->canary2);
+#endif
+
 	fprintf(table_file, "\t\t\t</tr>\n");
 
 	if (fclose(table_file))
