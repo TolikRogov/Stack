@@ -3,7 +3,7 @@
 const char* StackErrorsMessenger(StackStatusCode status) {
 	switch (status) {
 		case STACK_NO_ERROR: 				return "STACK ERROR - NO ERRORS";
-		case STACK_ERROR:					return "STACK ERROR";
+		case STACK_ERROR:					return "STACK ERROR - ERROR";
 
 		case STACK_ALLOC_ERROR: 			return "STACK ERROR - MEMORY ALLOCATION FAILED";
 
@@ -466,9 +466,11 @@ StackStatusCode StrConcatenation(const char* string1, const char* string2, char*
 
 StackStatusCode StackMemset(Stack_t* stk, const size_t start, const size_t cnt, const Stack_elem_t value) {
 
-	StackStatusCode status = STACK_NO_ERROR;
+	if (!stk)
+		STACK_ERROR_CHECK(STACK_POINTER_ERROR, stk);
 
-	STACK_VERIFY(stk);
+	if (!stk->data)
+		STACK_ERROR_CHECK(STACK_DATA_POINTER_ERROR, stk);
 
 	for (size_t i = 0; i < cnt; i++)
 		*(stk->data + start + i) = value;
