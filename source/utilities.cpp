@@ -76,7 +76,7 @@ StackStatusCode StrConcatenation(const char* string1, const char* string2, char*
 StackStatusCode CustomMemsetDouble(double* memory_start, const size_t cnt, const double value) {
 
 	if (!memory_start)
-		return STACK_POINTER_ERROR;
+		return STACK_DATA_POINTER_ERROR;
 
 	for (size_t i = 0; i < cnt; i++)
 		*(memory_start + i) = value;

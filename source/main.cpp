@@ -1,13 +1,11 @@
 #include "../include/STACK_LIBRARY.hpp"
 
 //TODO:
-//  -I) 	-I key (я пытался)
-//  II)     DUMP from DED with colors
-//  III)    STACK UNDERFLOW conception
-
-//  IV)     Possible errors: not check memset return value, stack ctor -1,
-
 //	~)		TheROBT: color printf, error check, html log
+//  ~) 		-I key (я пытался)
+
+//  II)     DUMP from DED with colors
+//  IV)     Possible errors: not check memset return value, stack ctor -1, with second stack
 
 int main() {
 

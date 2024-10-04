@@ -170,8 +170,10 @@ StackStatusCode FilesCtor(Stack_t* stk) {
 		fprintf(log_file, "\t\t</p><br>\n");
 
 #ifdef HTML_DUMP
-		fprintf(log_file, "\t\t<p class = 'stack_info'><tt>Stack_t[%p] born at %s:%zu, name '%s'</tt></p>\n",
-				stk, stk->stack_info.file_name, stk->stack_info.line, stk->stack_info.stack_name);
+		fprintf(log_file, "\t\t<h2><p class = 'stack_info'><tt>Stack_t[<span class='stack_address'>%p</span>] "
+						 "born at <span class='stack_file_name'>%s</span>:<span class='stack_line'>%zu</span>, "
+						 "name '<span class='stack_name'>%s</span>'</tt></p></h2>\n",
+						 stk, stk->stack_info.file_name, stk->stack_info.line, stk->stack_info.stack_name);
 #endif
 
 		if (fclose(log_file))
@@ -195,6 +197,12 @@ StackStatusCode CssLogStarter(Stack_t* stk) {
 	fprintf(styles_file, ".anchor:link { \n\tcolor: #fff; \n}\n\n");
 	fprintf(styles_file, ".anchor:visited { \n\tcolor: #fff; \n}\n\n");
 	fprintf(styles_file, ".anchor:focused { \n\tborder-bottom: 1px solid; \n\tbackground: #bae498; \n}\n\n");
+
+	fprintf(styles_file, ".stack_info { \n\ttext-align: center; \n}\n\n");
+	fprintf(styles_file, ".stack_address { \n\tcolor: #4B0082; \n}\n\n");
+	fprintf(styles_file, ".stack_file_name { \n\tcolor: #FFA500; \n}\n\n");
+	fprintf(styles_file, ".stack_line { \n\tcolor: #20B2AA; \n}\n\n");
+	fprintf(styles_file, ".stack_name { \n\tcolor: #7B68EE; \n}\n\n");
 
 	fprintf(styles_file, ".table_header > td > h3{ \n\tpadding: 10px 20px; \n}\n\n");
 	fprintf(styles_file, ".stack_dump_number { \n\tcolor: turquoise; \n\ttext-align: center; \n}\n\n");

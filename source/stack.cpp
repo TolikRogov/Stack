@@ -29,6 +29,9 @@ StackStatusCode DoStackCtor(Stack_t* stk, size_t capacity) {
 	if (!stk)
 		STACK_ERROR_CHECK(STACK_POINTER_ERROR, stk);
 
+	if (capacity > 1e10 || !capacity)
+		STACK_ERROR_CHECK(STACK_CAPACITY_ERROR, stk);
+
 #ifdef HTML_DUMP
 	status = HtmlLogStarter(stk);
 	STACK_ERROR_CHECK(status, stk);
