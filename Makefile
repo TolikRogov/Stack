@@ -5,7 +5,7 @@ LDFLAGS = -fsanitize=address,alignment
 BUILD_DIR = build
 SOURCE = source
 
-OBJECTS = $(BUILD_DIR)/main.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/utilities.o
+OBJECTS = $(BUILD_DIR)/main.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/utilities.o $(BUILD_DIR)/log.o
 EXECUTABLE = $(BUILD_DIR)/st
 
 $(EXECUTABLE): $(OBJECTS)
