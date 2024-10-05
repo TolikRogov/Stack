@@ -11,7 +11,8 @@ static StackStatusCode DoStackHash(Stack_t* stk) {
 
 	#ifdef CANARY_PROTECTION
 		size_t size = stk->capacity * sizeof(Stack_elem_t) + 2 * sizeof(Canary_t);
-		stk->data_hash = DJB2Hash((char*)stk->data - sizeof(Canary_t), size + (ALIGNMENT - size % ALIGNMENT));
+		stk->data_hash = DJB2Hash((char*)stk->data - sizeof(Canary_t) - sizeof(Canary_t) % ALIGNMENT,
+								  size + (ALIGNMENT - size % ALIGNMENT));
 	#else
 		stk->data_hash = DJB2Hash(stk->data, stk->capacity * sizeof(Stack_elem_t));
 	#endif
@@ -305,7 +306,7 @@ StackStatusCode VerifyHashAndStatus(Stack_t* stk) {
 
 	#ifdef CANARY_PROTECTION
 		size_t size = stk->capacity * sizeof(Stack_elem_t) + 2 * sizeof(Canary_t);
-		Hash_t data_hash = DJB2Hash((char*)stk->data - sizeof(Canary_t), size + (ALIGNMENT - size % ALIGNMENT));
+		Hash_t data_hash = DJB2Hash((char*)stk->data - sizeof(Canary_t) - sizeof(Canary_t) % ALIGNMENT, size + (ALIGNMENT - size % ALIGNMENT));
 	#else
 		Hash_t data_hash = DJB2Hash(stk->data, stk->capacity * sizeof(Stack_elem_t));
 	#endif
