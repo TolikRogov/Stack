@@ -476,7 +476,8 @@ StackStatusCode DoStackDumpTable(Stack_t* stk) {
 #endif
 
 #ifdef CANARY_PROTECTION
-	fprintf(table_file, "\t\t\t\t<td class = 'hex_speak'><tt>%X</tt></td>\n", (int)(*(Canary_t*)((char*)stk->data - sizeof(Canary_t))));
+	fprintf(table_file, "\t\t\t\t<td class = 'hex_speak'><tt>%X</tt></td>\n",
+			(int)(*(Canary_t*)((char*)stk->data - sizeof(Canary_t) - sizeof(Canary_t) % ALIGNMENT)));
 #endif
 
 	fprintf(table_file, "\t\t\t\t<td class = 'stack_data_pointer'><tt>%p</tt></td>\n", stk->data);
