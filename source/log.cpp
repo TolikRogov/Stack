@@ -405,8 +405,8 @@ StackStatusCode DoStackDumpMain(Stack_t* stk, DumpInfo dump_info) {
 #ifdef CANARY_PROTECTION
 		fprintf(main_file, "\t\t\t<p><tt><pre>\t\t<span class='parameter'>data canary1</span> [<span class='address'>%p</span>] = "
 						  "<span class='hex_speak'>0x%X</span></pre></tt></p>\n",
-						  (Canary_t*)((char*)stk->data - sizeof(Canary_t)),
-						  (int)(*(Canary_t*)((char*)stk->data - sizeof(Canary_t))));
+						  (Canary_t*)((char*)stk->data - sizeof(Canary_t) - sizeof(Canary_t) % ALIGNMENT),
+						  (int)(*(Canary_t*)((char*)stk->data - sizeof(Canary_t) - sizeof(Canary_t) % ALIGNMENT)));
 #endif
 
 		fprintf(main_file, "\t\t\t<p><tt><pre>\t\t<span class='parameter'>data</span> [<span class='address'>%p</span>]:</pre></tt></p>\n"
@@ -423,11 +423,13 @@ StackStatusCode DoStackDumpMain(Stack_t* stk, DumpInfo dump_info) {
 	}
 
 #ifdef CANARY_PROTECTION
-	if (stk->data)
+	if (stk->data) {
+		size_t data_size = stk->capacity * sizeof(Stack_elem_t);
 		fprintf(main_file, "\t\t\t<p><tt><pre>\t\t<span class='parameter'>data canary2</span> [<span class='address'>%p</span>] = "
 						  "<span class='hex_speak'>0x%X</span></pre></tt></p>\n",
 						  (Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)),
-						  (int)(*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t))));
+						  (int)(*(Canary_t*)((char*)stk->data + data_size + (ALIGNMENT - data_size % ALIGNMENT))));
+	}
 
 	fprintf(main_file, "\t\t\t<p><tt><pre>\t\t<span class='parameter'>stack canary2</span> = <span class='hex_speak'>0x%X</span></pre></tt></p>\n",
 					  (int)stk->canary2);
@@ -485,8 +487,9 @@ StackStatusCode DoStackDumpTable(Stack_t* stk) {
 	fprintf(table_file, "</tt></td>\n");
 
 #ifdef CANARY_PROTECTION
+	size_t data_size = stk->capacity * sizeof(Stack_elem_t);
 	fprintf(table_file, "\t\t\t\t<td class = 'hex_speak'><tt>%X</tt></td>\n",
-			(int)(*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t))));
+			(int)(*(Canary_t*)((char*)stk->data + data_size + (ALIGNMENT - data_size & ALIGNMENT))));
 
 	fprintf(table_file, "\t\t\t\t<td class = 'hex_speak'><tt>%llX</tt></td>\n", stk->canary2);
 #endif

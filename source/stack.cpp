@@ -69,8 +69,9 @@ StackStatusCode DoStackCalloc(Stack_t* stk) {
 	if (!stk->data)
 		STACK_ERROR_CHECK(STACK_ALLOC_ERROR, stk);
 
-	*(Canary_t*)((char*)stk->data - sizeof(Canary_t)) = DATA_CANARY_HEX;
-	*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)) = DATA_CANARY_HEX;
+	size_t data_size = stk->capacity * sizeof(Stack_elem_t);
+	*(Canary_t*)((char*)stk->data - sizeof(Canary_t) - sizeof(Canary_t) % ALIGNMENT) = DATA_CANARY_HEX;
+	*(Canary_t*)((char*)stk->data + data_size + (ALIGNMENT - data_size % ALIGNMENT)) = DATA_CANARY_HEX;
 #else
 	if (stk->capacity != 0) {
 		stk->data = (Stack_elem_t*)calloc(stk->capacity, sizeof(Stack_elem_t));
@@ -126,9 +127,11 @@ StackStatusCode DoStackReallocUp(Stack_t* stk) {
 
 #ifdef CANARY_PROTECTION
 	size_t size = (stk->capacity *= 2) * sizeof(Stack_elem_t) + 2 * sizeof(Canary_t);
-	stk->data = (Stack_elem_t*)((char*)realloc((char*)stk->data - sizeof(Canary_t), size + (ALIGNMENT - size % ALIGNMENT)) + sizeof(Canary_t));
+	stk->data = (Stack_elem_t*)((char*)realloc((char*)stk->data - sizeof(Canary_t) - sizeof(Canary_t) % ALIGNMENT,
+											   size + (ALIGNMENT - size % ALIGNMENT)) + sizeof(Canary_t));
 
-	*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)) = DATA_CANARY_HEX;
+	size_t data_size = stk->capacity * sizeof(Stack_elem_t);
+	*(Canary_t*)((char*)stk->data + data_size + (ALIGNMENT - data_size % ALIGNMENT)) = DATA_CANARY_HEX;
 #else
 	stk->data = (Stack_elem_t*)realloc(stk->data, (stk->capacity *= 2) * sizeof(Stack_elem_t));
 #endif
@@ -186,9 +189,11 @@ StackStatusCode DoStackReallocDown(Stack_t* stk) {
 
 #ifdef CANARY_PROTECTION
 	size_t size = (stk->capacity = (stk->size < DEFAULT_CAPACITY ? DEFAULT_CAPACITY : stk->size)) * sizeof(Stack_elem_t) + 2 * sizeof(Canary_t);
-	stk->data = (Stack_elem_t*)((char*)realloc((char*)stk->data - sizeof(Canary_t), size + (ALIGNMENT - size % ALIGNMENT)) + sizeof(Canary_t));
+	stk->data = (Stack_elem_t*)((char*)realloc((char*)stk->data - sizeof(Canary_t) - sizeof(Canary_t) % ALIGNMENT,
+											   size + (ALIGNMENT - size % ALIGNMENT)) + sizeof(Canary_t));
 
-	*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)) = DATA_CANARY_HEX;
+	size_t data_size = stk->capacity * sizeof(Stack_elem_t);
+	*(Canary_t*)((char*)stk->data + data_size + (ALIGNMENT - data_size % ALIGNMENT)) = DATA_CANARY_HEX;
 #else
 	stk->data = (Stack_elem_t*)realloc(stk->data, (stk->capacity = stk->size) * sizeof(Stack_elem_t));
 #endif
@@ -331,10 +336,11 @@ StackStatusCode VerifyCanaries(Stack_t* stk) {
 		stk->status |= (1 << STACK_RIGHT_CANARY_ERROR);
 
 	if (stk->data) {
-		if (!CompareDouble(*(Canary_t*)((char*)stk->data - sizeof(Canary_t)), DATA_CANARY_HEX))
+		if (!CompareDouble(*(Canary_t*)((char*)stk->data - sizeof(Canary_t) - sizeof(Canary_t) % ALIGNMENT), DATA_CANARY_HEX))
 			stk->status |= (1 << STACK_DATA_LEFT_CANARY_ERROR);
 
-		if (!CompareDouble(*(Canary_t*)((char*)stk->data + stk->capacity * sizeof(Stack_elem_t)), DATA_CANARY_HEX))
+		size_t data_size = stk->capacity * sizeof(Stack_elem_t);
+		if (!CompareDouble(*(Canary_t*)((char*)stk->data + data_size + (ALIGNMENT - data_size % ALIGNMENT)), DATA_CANARY_HEX))
 			stk->status |= (1 << STACK_DATA_RIGHT_CANARY_ERROR);
 	}
 #endif
