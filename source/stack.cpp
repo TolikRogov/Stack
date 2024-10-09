@@ -10,7 +10,7 @@ static StackStatusCode DoStackHash(Stack_t* stk) {
 		STACK_ERROR_CHECK(STACK_DATA_POINTER_ERROR, stk);
 
 	#ifdef CANARY_PROTECTION
-		size_t size = stk->capacity * sizeof(Stack_elem_t) + 2 * sizeof(Canary_t);
+		size_t size = stk->capacity * sizeof(Stack_elem_t) + 2 * sizeof(Canary_t) + 2 * sizeof(Canary_t) % ALIGNMENT;
 		stk->data_hash = DJB2Hash((char*)stk->data - sizeof(Canary_t) - sizeof(Canary_t) % ALIGNMENT,
 								  size + (ALIGNMENT - size % ALIGNMENT));
 	#else
@@ -25,12 +25,14 @@ static StackStatusCode DoStackHash(Stack_t* stk) {
 
 StackStatusCode DoStackCtor(Stack_t* stk, size_t capacity) {
 
+	const size_t MAX_SIZE = 1e10;
+
 	StackStatusCode status = STACK_NO_ERROR;
 
 	if (!stk)
 		STACK_ERROR_CHECK(STACK_POINTER_ERROR, stk);
 
-	if (capacity > 1e10 || !capacity)
+	if (capacity > MAX_SIZE || !capacity)
 		STACK_ERROR_CHECK(STACK_CAPACITY_ERROR, stk);
 
 #ifdef HTML_DUMP
@@ -269,10 +271,10 @@ StackStatusCode DoStackDtor(Stack_t* stk) {
 	stk->capacity = TRASH;
 	stk->size 	  = TRASH;
 
-	if (stk->data) {
+	if (stk->data && ((char*)stk->data - sizeof(Canary_t) - sizeof(Canary_t) % ALIGNMENT)) {
 
 #ifdef CANARY_PROTECTION
-		char* alloc_memory = ((char*)stk->data - sizeof(Canary_t));
+		char* alloc_memory = ((char*)stk->data - sizeof(Canary_t) - sizeof(Canary_t) % ALIGNMENT);
 #else
 		char* alloc_memory = (char*)stk->data;
 #endif
@@ -350,6 +352,9 @@ StackStatusCode VerifyCanaries(Stack_t* stk) {
 }
 
 StackStatusCode CheckerStackStatus(Stack_t* stk, const char* file, const char* func, const size_t line) {
+
+	if (!stk)
+		return STACK_POINTER_ERROR;
 
 	for (size_t i = 0; i < sizeof(stk->status) * 8; i++) {
 		if (((1 << i) & stk->status) >> i)
