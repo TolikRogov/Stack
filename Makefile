@@ -11,6 +11,7 @@ OBJECTS = $(BUILD_DIR)/main.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/utilities.o $(BU
 EXECUTABLE = $(BUILD_DIR)/st
 
 default:
+	clear
 	@make clean
 	@make ctor
 	@./$(BUILD_DIR)/st

@@ -2,8 +2,9 @@
 #define CONFIG_INCLUDE
 
 #define HTML_DUMP
-#define CANARY_PROTECTION
-#define HASH_PROTECTION
-//#define N_DEBUG
+//#define CANARY_PROTECTION
+//#define HASH_PROTECTION
+#define N_DEBUG
+#define RETURN_ERRORS
 
 #endif //CONFIG_INCLUDE

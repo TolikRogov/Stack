@@ -11,6 +11,12 @@
 #define INIT_STACK(stk) Stack_t stk = {}
 #endif
 
+#ifdef RETURN_ERRORS
+	#define RETURN_STATUS(...) __VA_ARGS__
+#else
+	#define RETURN_STATUS(...)
+#endif
+
 #define STACK_ERROR_CHECK(status, stk) {																	 	 		 \
 	if (status != STACK_NO_ERROR) {																						\
 		CheckerStackStatus(stk, __FILE__, __PRETTY_FUNCTION__, __LINE__);												\
@@ -19,7 +25,7 @@
 					status, StackErrorsMessenger(status), __FILE__, __PRETTY_FUNCTION__, __LINE__);						\
 		if (!(fclose(stderr)))																							\
 			DoStackDtor(stk);																							\
-		return status;																									\
+		RETURN_STATUS(return status;)																					\
 	}																													\
 }
 
