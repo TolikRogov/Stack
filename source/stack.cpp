@@ -1,4 +1,4 @@
-#include "../include/STACK_LIBRARY.hpp"
+#include "STACK_LIBRARY.hpp"
 
 #ifdef HASH_PROTECTION
 static StackStatusCode DoStackHash(Stack_t* stk) {
