@@ -17,13 +17,13 @@ StackStatusCode DirCtor(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
-	status = DeleteLogDir(stk);
-	STACK_ERROR_CHECK(status, stk);
-
 	status = MakeDirsPaths(stk);
 	STACK_ERROR_CHECK(status, stk);
 
 	status = MakeFilesPaths(stk);
+	STACK_ERROR_CHECK(status, stk);
+
+	status = DeleteLogDir(stk);
 	STACK_ERROR_CHECK(status, stk);
 
 	status = MakeDirsFolders(stk);
@@ -36,7 +36,10 @@ StackStatusCode MakeDirsPaths(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
-	status = StrConcatenation(stk->log.dir_name, stk->log.styles.c_dir_name, &stk->log.styles.c_dir_path, stk);
+	status = StrConcatenation(stk->log.project_path, stk->log.dir_name, &stk->log.dir_path, stk);
+	STACK_ERROR_CHECK(status, stk);
+
+	status = StrConcatenation(stk->log.dir_path, stk->log.styles.c_dir_name, &stk->log.styles.c_dir_path, stk);
 	STACK_ERROR_CHECK(status, stk);
 
 	return STACK_NO_ERROR;
@@ -47,7 +50,7 @@ StackStatusCode MakeFilesPaths(Stack_t* stk) {
 	StackStatusCode status = STACK_NO_ERROR;
 
 	for (size_t i = 0; i < stk->log.cnt_files; i++) {
-		status = StrConcatenation(stk->log.dir_name, stk->log.files[i].file_name, &stk->log.files[i].file_path, stk);
+		status = StrConcatenation(stk->log.dir_path, stk->log.files[i].file_name, &stk->log.files[i].file_path, stk);
 		STACK_ERROR_CHECK(status, stk);
 	}
 
@@ -63,14 +66,14 @@ StackStatusCode MakeDirsFolders(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
-	const char* folders[] = { stk->log.dir_name,
+	const char* folders[] = { stk->log.dir_path,
 							  stk->log.styles.c_dir_path };
 
 	size_t size = sizeof(folders) / sizeof(folders[0]);
 
 	for (size_t i = 0; i < size; i++) {
 		char* make_folder = NULL;
-		status = StrConcatenation("mkdir ", folders[i], &make_folder, stk);
+		status = StrConcatenation(LOG_MAKE_DIR, folders[i], &make_folder, stk);
 		STACK_ERROR_CHECK(status, stk);
 
 		DIR* cur_dir = opendir(folders[i]);
@@ -95,15 +98,15 @@ StackStatusCode DeleteLogDir(Stack_t* stk) {
 
 	StackStatusCode status = STACK_NO_ERROR;
 
-	DIR* log_dir = opendir(stk->log.dir_name);
+	DIR* log_dir = opendir(stk->log.dir_path);
 	if (!log_dir)
-		STACK_ERROR_CHECK(STACK_DIR_OPEN_ERROR, stk);
+		return STACK_NO_ERROR;
 
 	if(closedir(log_dir))
 		STACK_ERROR_CHECK(STACK_DIR_CLOSE_ERROR, stk);
 
 	char* delete_folder = NULL;
-	status = StrConcatenation("rm -rf ", stk->log.dir_name, &delete_folder, stk);
+	status = StrConcatenation(LOG_DELETE, stk->log.dir_path, &delete_folder, stk);
 	STACK_ERROR_CHECK(status, stk);
 
 	if(system(delete_folder))
@@ -113,7 +116,7 @@ StackStatusCode DeleteLogDir(Stack_t* stk) {
 		delete_folder = NULL;
 	}
 
-	log_dir = opendir(stk->log.dir_name);
+	log_dir = opendir(stk->log.dir_path);
 	if (log_dir) {
 		if(closedir(log_dir))
 			STACK_ERROR_CHECK(STACK_DIR_CLOSE_ERROR, stk);
@@ -344,7 +347,7 @@ StackStatusCode RunMainHtmlFile(Stack_t* stk) {
 	StackStatusCode status = STACK_NO_ERROR;
 
 	char* open_log_file = NULL;
-	status = StrConcatenation("open ", stk->log.files[MAIN].file_path, &open_log_file, stk);
+	status = StrConcatenation(LOG_OPEN, stk->log.files[MAIN].file_path, &open_log_file, stk);
 	STACK_ERROR_CHECK(status, stk);
 
 	if(system(open_log_file))
@@ -499,6 +502,35 @@ StackStatusCode DoStackDumpTable(Stack_t* stk) {
 
 	if (fclose(table_file))
 		STACK_ERROR_CHECK(STACK_FILE_CLOSE_ERROR, stk);
+
+	return STACK_NO_ERROR;
+}
+
+StackStatusCode DirDtor(Stack_t* stk) {
+
+	for (size_t i = 0; i < stk->log.cnt_files; i++) {
+		if (stk->log.files[i].file_path) {
+			free(stk->log.files[i].file_path);
+			stk->log.files[i].file_path = NULL;
+		}
+	}
+
+	if (stk->log.styles.c_dir_path) {
+		free(stk->log.styles.c_dir_path);
+		stk->log.styles.c_dir_path = NULL;
+	}
+
+	if (stk->log.dir_path) {
+		free(stk->log.dir_path);
+		stk->log.dir_path = NULL;
+	}
+
+	for (size_t i = 0; i < stk->log.styles.c_dir_cnt_files; i++) {
+		if (stk->log.styles.files[i].file_path) {
+			free(stk->log.styles.files[i].file_path);
+			stk->log.styles.files[i].file_path = NULL;
+		}
+	}
 
 	return STACK_NO_ERROR;
 }

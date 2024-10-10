@@ -46,7 +46,9 @@ struct File {
 };
 
 struct Dir {
-	const char* dir_name = "log_eblan/";
+	const char* project_path = realpath(".", NULL);
+	const char* dir_name = "/log_eblan/";
+	char* dir_path;
 
 	size_t cnt_files = 2;
 	File files[2] = { {.file_name = "main.html"},

@@ -18,6 +18,15 @@ struct DumpInfo {
 	const char* func;
 };
 
+const char LOG_DELETE[] 	= "rm -rf ";
+const char LOG_MAKE_DIR[] 	= "mkdir ";
+
+#ifdef __APPLE__
+	const char LOG_OPEN[]   = "open ";
+#else
+	const char LOG_OPEN[] 	= "xdg-open ";
+#endif
+
 StackStatusCode HtmlLogStarter(Stack_t* stk);
 
 StackStatusCode DirCtor(Stack_t* stk);
