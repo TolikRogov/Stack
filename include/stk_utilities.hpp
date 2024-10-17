@@ -1,5 +1,5 @@
-#ifndef UTILITIES_INCLUDE
-#define UTILITIES_INCLUDE
+#ifndef STK_UTILITIES_INCLUDE
+#define STK_UTILITIES_INCLUDE
 
 #include "libraries.hpp"
 #include "wrappers.hpp"
@@ -23,4 +23,4 @@ int CompareDouble(const double var1, const double var2);
 const char* StackErrorsMessenger(StackStatusCode status);
 StackStatusCode ArgvFixer(int argc, char* argv[]);
 
-#endif //UTILITIES_INCLUDE
+#endif //STK_UTILITIES_INCLUDE
