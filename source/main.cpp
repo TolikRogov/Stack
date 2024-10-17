@@ -1,6 +1,8 @@
 #include "STACK_LIBRARY.hpp"
 
-int main() {
+int main(int argc, char* argv[]) {
+
+	ArgvFixer(argc, argv);
 
 	INIT_STACK(stk);
 

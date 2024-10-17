@@ -2,7 +2,7 @@
 #define STACK_LIBRARY_INCLUDE
 
 #include "config.hpp"
-#include "utilities.hpp"
+#include "stk_utilities.hpp"
 #include "log.hpp"
 
 #endif //STACK_LIBRARY_INCLUDE

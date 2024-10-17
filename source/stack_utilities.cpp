@@ -1,4 +1,4 @@
-#include "utilities.hpp"
+#include "stk_utilities.hpp"
 
 const char* StackErrorsMessenger(StackStatusCode status) {
 	switch (status) {
@@ -6,6 +6,7 @@ const char* StackErrorsMessenger(StackStatusCode status) {
 		case STACK_ERROR:					return "STACK ERROR - ERROR";
 
 		case STACK_ALLOC_ERROR: 			return "STACK ERROR - MEMORY ALLOCATION FAILED";
+		case STACK_FREE_ERROR: 				return "STACK ERROR - MEMORY WAS NOT ALLOCATED FOR STACK";
 
 		case STACK_FILE_CLOSE_ERROR:		return "STACK ERROR - FILE WAS NOT CLOSED";
 		case STACK_FILE_OPEN_ERROR:			return "STACK ERROR - FILE WAS NOT OPENED";
@@ -86,4 +87,15 @@ StackStatusCode CustomMemsetDouble(double* memory_start, const size_t cnt, const
 
 int CompareDouble(const double var1, const double var2) {
 	return (abs(var1 - var2) <= EPS);
+}
+
+StackStatusCode ArgvFixer(int argc, char* argv[]) {
+
+	if (argc) {}
+	size_t j = StrLen(*argv) - 1;
+	for (size_t k = 0; *(*argv + j) != '/' || !k; j--)
+		k += *(*argv + j) == '/' ? 1 : 0;
+	*(*argv + j + 1) = '\0';
+
+	return STACK_NO_ERROR;
 }

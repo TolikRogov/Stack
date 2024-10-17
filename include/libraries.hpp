@@ -5,5 +5,6 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
+#include <limits.h>
 
 #endif //LIBRARIES_INCLUDE

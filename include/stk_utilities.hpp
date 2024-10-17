@@ -21,5 +21,6 @@ StackStatusCode CustomMemsetDouble(double* memory_start, const size_t cnt, const
 size_t StrLen(const char* str);
 int CompareDouble(const double var1, const double var2);
 const char* StackErrorsMessenger(StackStatusCode status);
+StackStatusCode ArgvFixer(int argc, char* argv[]);
 
 #endif //UTILITIES_INCLUDE
