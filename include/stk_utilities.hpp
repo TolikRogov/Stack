@@ -6,7 +6,7 @@
 #include "stack.hpp"
 
 const size_t 		ALIGNMENT	 		= 8;
-const size_t 		DEFAULT_CAPACITY 	= 16;
+const size_t 		DEFAULT_CAPACITY 	= 4;
 
 const Stack_elem_t 	POISON 	  			= -6e-99;
 const double 		EPS 			 	= 1e-10;
