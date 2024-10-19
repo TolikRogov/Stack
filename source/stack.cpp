@@ -268,8 +268,8 @@ StackStatusCode DoStackDtor(Stack_t* stk) {
 	stk->canary2 = (Canary_t)TRASH;
 #endif
 
-	stk->capacity = TRASH;
-	stk->size 	  = TRASH;
+	stk->capacity = STACK_TRASH;
+	stk->size 	  = STACK_TRASH;
 
 	if (stk->data && ((char*)stk->data - sizeof(Canary_t) - sizeof(Canary_t) % ALIGNMENT)) {
 

@@ -11,7 +11,7 @@ const size_t 		DEFAULT_CAPACITY 	= 4;
 const Stack_elem_t 	POISON 	  			= -6e-99;
 const double 		EPS 			 	= 1e-10;
 
-const u_int64_t 	TRASH 			  	= 0xBEDADEDBEDA;
+const u_int64_t 	STACK_TRASH 		= 0xBEDADEDBEDA;
 const u_int64_t 	STACK_CANARY_HEX	= 0xDEADDED;
 const u_int64_t		DATA_CANARY_HEX		= 0xBADFACE;
 
