@@ -350,8 +350,10 @@ StackStatusCode RunMainHtmlFile(Stack_t* stk) {
 	status = StrConcatenation(LOG_OPEN, stk->log.files[MAIN].file_path, &open_log_file, stk);
 	STACK_ERROR_CHECK(status, stk);
 
+#ifdef N_DEBUG
 	if(system(open_log_file))
 		STACK_ERROR_CHECK(STACK_RUN_HTML_ERROR, stk);
+#endif
 
 #ifdef N_DEBUG
 	printf("\n\n" GREEN("HTML FILE WAS RUN") "\n\n");
